@@ -156,11 +156,11 @@ export default function IncidentsPage() {
         <div>
           <div className="flex items-center gap-2">
             <AlertOctagon className="w-6 h-6 text-rose-500" />
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Incidents & Error Quarantine
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Incidents &amp; Error Quarantine
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             Real-time anomaly quarantine across relayer gas, unanchored ledger sales, and disputed shipments.
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function IncidentsPage() {
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium border border-slate-700 transition-colors disabled:opacity-50 cursor-pointer self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors disabled:opacity-50 cursor-pointer self-start sm:self-auto shadow-2xs"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
           <span>Refresh</span>
@@ -177,37 +177,47 @@ export default function IncidentsPage() {
 
       {/* Summary Metrics Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[11px] font-medium text-slate-400 block mb-1">Active Incidents</span>
-          <div className="text-lg sm:text-xl font-bold text-white font-mono">
+        <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
+            Active Incidents
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white font-mono">
             {isLoading ? "..." : summary.total}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[11px] font-medium text-slate-400 block mb-1">Critical Blockers</span>
-          <div className="text-lg sm:text-xl font-bold text-rose-400 font-mono">
+        <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
+            Critical Blockers
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-rose-600 dark:text-rose-400 font-mono">
             {isLoading ? "..." : summary.critical}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[11px] font-medium text-slate-400 block mb-1">Stalled Receipts</span>
-          <div className="text-lg sm:text-xl font-bold text-blue-400 font-mono">
+        <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
+            Stalled Receipts
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 font-mono">
             {isLoading ? "..." : summary.stalledReceipts}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[11px] font-medium text-slate-400 block mb-1">Stalled Shipments</span>
-          <div className="text-lg sm:text-xl font-bold text-cyan-400 font-mono">
+        <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
+            Stalled Shipments
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-cyan-600 dark:text-cyan-400 font-mono">
             {isLoading ? "..." : summary.stalledShipments || 0}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-          <span className="text-[11px] font-medium text-slate-400 block mb-1">Disputed Packages</span>
-          <div className="text-lg sm:text-xl font-bold text-purple-400 font-mono">
+        <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-2xs">
+          <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
+            Disputed Packages
+          </span>
+          <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 font-mono">
             {isLoading ? "..." : summary.disputedShipments}
           </div>
         </div>
@@ -215,35 +225,35 @@ export default function IncidentsPage() {
 
       {/* Relayer Fuel Health Alert Banner */}
       {!isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.1 ? (
-        <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200 text-xs flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+            <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             <span>
-              <strong className="text-white">CRITICAL RELAYER FUEL:</strong> Current balance is{" "}
-              <strong className="font-mono text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.10 AVAX threshold).
+              <strong className="text-rose-950 dark:text-white">CRITICAL RELAYER FUEL:</strong> Current balance is{" "}
+              <strong className="font-mono text-rose-950 dark:text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.10 AVAX threshold).
               Risk of immediate transaction revert!
             </span>
           </div>
           <Link
             href="/infrastructure"
-            className="px-2.5 py-1 rounded bg-rose-900/80 hover:bg-rose-800 text-white font-medium text-[11px] whitespace-nowrap transition-colors"
+            className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-medium text-[11px] whitespace-nowrap transition-colors"
           >
             Inspect Infrastructure
           </Link>
         </div>
       ) : !isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.5 ? (
-        <div className="p-3.5 rounded-xl bg-slate-900/80 border border-blue-900/60 text-slate-300 text-xs flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-slate-900/80 border border-blue-200 dark:border-blue-900/60 text-slate-700 dark:text-slate-300 text-xs flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-blue-400 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <span>
-              <strong className="text-white">Relayer Fuel Warning:</strong> Current balance is{" "}
-              <strong className="font-mono text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.50 AVAX threshold).
+              <strong className="text-slate-900 dark:text-white">Relayer Fuel Warning:</strong> Current balance is{" "}
+              <strong className="font-mono text-slate-900 dark:text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.50 AVAX threshold).
               Fuel top-up advised to maintain smooth transaction throughput.
             </span>
           </div>
           <Link
             href="/infrastructure"
-            className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-[11px] whitespace-nowrap transition-colors"
+            className="px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-[11px] whitespace-nowrap transition-colors"
           >
             Inspect Infrastructure
           </Link>
@@ -251,9 +261,9 @@ export default function IncidentsPage() {
       ) : null}
 
       {/* Filters Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-slate-900/40 p-3 rounded-xl border border-slate-800 text-xs">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
         {/* Category Filter */}
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 overflow-x-auto">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto">
           {(
             [
               { id: "all", label: "All Items" },
@@ -266,10 +276,10 @@ export default function IncidentsPage() {
             <button
               key={cat.id}
               onClick={() => setCategoryFilter(cat.id)}
-              className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 categoryFilter === cat.id
                   ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800"
               }`}
             >
               {cat.label}
@@ -279,15 +289,15 @@ export default function IncidentsPage() {
 
         {/* Severity Filter */}
         <div className="flex items-center gap-1.5 self-start sm:self-auto">
-          <span className="text-[11px] text-slate-500">Severity:</span>
+          <span className="text-[11px] text-slate-500 font-medium">Severity:</span>
           {(["all", "critical", "warning"] as const).map((sev) => (
             <button
               key={sev}
               onClick={() => setSeverityFilter(sev)}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize transition-colors border ${
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium capitalize transition-colors border cursor-pointer ${
                 severityFilter === sev
-                  ? "bg-slate-800 text-white border-blue-500/80"
-                  : "bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200"
+                  ? "bg-slate-900 dark:bg-slate-800 text-white border-blue-500/80"
+                  : "bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               {sev}
@@ -299,18 +309,18 @@ export default function IncidentsPage() {
       {/* Incident List Content */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="p-12 text-center text-slate-400 space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400 space-y-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-500" />
-            <p className="text-xs">Evaluating incident telemetry from MongoDB & Avalanche C-Chain node...</p>
+            <p className="text-xs">Evaluating incident telemetry from MongoDB &amp; Avalanche C-Chain node...</p>
           </div>
         ) : filteredIncidents.length === 0 ? (
-          <div className="p-12 text-center space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">
-            <div className="w-12 h-12 rounded-full bg-emerald-950/80 border border-emerald-800/60 flex items-center justify-center text-emerald-400 mx-auto">
+          <div className="p-12 text-center space-y-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto shadow-2xs">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">System Enclave Healthy</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">System Enclave Healthy</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
                 No active error quarantine items. All issued ledger receipts are anchored and zero custody disputes are pending.
               </p>
             </div>
@@ -319,51 +329,53 @@ export default function IncidentsPage() {
           filteredIncidents.map((item) => (
             <div
               key={item.id}
-              className={`p-4 rounded-xl border bg-slate-900/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+              className={`p-4 rounded-xl border bg-white dark:bg-slate-900/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs ${
                 item.severity === "critical"
-                  ? "border-rose-900/60 hover:border-rose-700/80"
-                  : "border-slate-800 hover:border-slate-700"
+                  ? "border-rose-200 dark:border-rose-900/60 hover:border-rose-300 dark:hover:border-rose-700/80"
+                  : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
               }`}
             >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Severity Badge */}
                   {item.severity === "critical" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-950 text-rose-300 border border-rose-800/80">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
                       <ShieldAlert className="w-3 h-3" />
                       CRITICAL
                     </span>
                   ) : item.severity === "warning" ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-950 text-blue-300 border border-blue-800/80">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
                       <AlertCircle className="w-3 h-3" />
                       WARNING
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                       INFO
                     </span>
                   )}
 
                   {/* Category Pill */}
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-slate-400 bg-slate-800/80">
-                    {item.category === "relayer" && <Server className="w-3 h-3 text-emerald-400" />}
-                    {item.category === "receipt_anchor" && <Receipt className="w-3 h-3 text-blue-400" />}
-                    {item.category === "shipment_anchor" && <Package className="w-3 h-3 text-cyan-400" />}
-                    {item.category === "shipment_dispute" && <Package className="w-3 h-3 text-purple-400" />}
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80">
+                    {item.category === "relayer" && <Server className="w-3 h-3 text-emerald-500" />}
+                    {item.category === "receipt_anchor" && <Receipt className="w-3 h-3 text-blue-500" />}
+                    {item.category === "shipment_anchor" && <Package className="w-3 h-3 text-cyan-500" />}
+                    {item.category === "shipment_dispute" && <Package className="w-3 h-3 text-purple-500" />}
                     <span className="capitalize">{item.category.replace("_", " ")}</span>
                   </span>
 
-                  <span className="text-xs font-semibold text-white truncate">{item.title}</span>
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                    {item.title}
+                  </span>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed">{item.description}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{item.description}</p>
 
                 {/* Entity Details Row */}
-                <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap pt-0.5">
+                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap pt-0.5">
                   {item.entityId && (
                     <div className="flex items-center gap-1 font-mono">
                       <span>ID:</span>
-                      <span className="text-slate-200 select-all font-semibold">
+                      <span className="text-slate-900 dark:text-slate-200 select-all font-semibold">
                         {item.amountOrTracking?.startsWith("SHPT-")
                           ? item.amountOrTracking
                           : item.entityId.length > 24
@@ -372,11 +384,11 @@ export default function IncidentsPage() {
                       </span>
                       <button
                         onClick={() => copyToClipboard(item.entityId!)}
-                        className="p-0.5 text-slate-500 hover:text-slate-300 cursor-pointer"
+                        className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
                         title="Copy Raw Identifier"
                       >
                         {copiedId === item.entityId ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3 h-3 text-emerald-500" />
                         ) : (
                           <Copy className="w-3 h-3" />
                         )}
@@ -386,16 +398,16 @@ export default function IncidentsPage() {
 
                   {item.merchantName && (
                     <div className="flex items-center gap-1">
-                      <Building2 className="w-3 h-3 text-slate-500" />
-                      <span className="text-slate-300 font-medium">{item.merchantName}</span>
+                      <Building2 className="w-3 h-3 text-slate-400" />
+                      <span className="text-slate-800 dark:text-slate-300 font-medium">{item.merchantName}</span>
                     </div>
                   )}
 
                   {item.amountOrTracking && !item.amountOrTracking.startsWith("SHPT-") && (
-                    <span className="font-mono text-slate-300">({item.amountOrTracking})</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">({item.amountOrTracking})</span>
                   )}
 
-                  <span className="text-slate-500">
+                  <span className="text-slate-400">
                     {new Date(item.createdAt).toLocaleTimeString()}
                   </span>
                 </div>
@@ -412,7 +424,7 @@ export default function IncidentsPage() {
                         category: item.category,
                       })
                     }
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
                   >
                     <RotateCcw
                       className={`w-3.5 h-3.5 ${retryMutation.isPending ? "animate-spin" : ""}`}
@@ -427,7 +439,7 @@ export default function IncidentsPage() {
                       setResolveModalItem(item);
                       setResolveNotes("");
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800/80 text-xs font-medium transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 text-xs font-medium transition-colors cursor-pointer shadow-2xs"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Resolve</span>
@@ -437,7 +449,7 @@ export default function IncidentsPage() {
                 {item.category === "relayer" ? (
                   <Link
                     href="/infrastructure"
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 text-xs font-medium transition-colors shadow-2xs"
                   >
                     <span>Inspect Infrastructure</span>
                     <ExternalLink className="w-3 h-3" />
@@ -445,7 +457,7 @@ export default function IncidentsPage() {
                 ) : item.entityId ? (
                   <Link
                     href={`/records?q=${encodeURIComponent(item.amountOrTracking?.startsWith("SHPT-") ? item.amountOrTracking : item.entityId)}`}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 text-xs font-medium transition-colors shadow-2xs"
                   >
                     <span>Inspect</span>
                     <ExternalLink className="w-3 h-3" />
@@ -459,17 +471,19 @@ export default function IncidentsPage() {
 
       {/* Incident Resolution Modal */}
       {resolveModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 max-w-md w-full space-y-4 shadow-xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 max-w-md w-full space-y-4 shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100">
             <div className="flex items-center justify-between gap-3 min-w-0">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-emerald-950 text-emerald-400 flex items-center justify-center border border-emerald-800/60 shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800/60 shrink-0">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-white truncate">Resolve Incident Alert</h3>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    Resolve Incident Alert
+                  </h3>
                   <p
-                    className="text-[11px] text-slate-400 font-mono truncate max-w-full"
+                    className="text-[11px] text-slate-500 font-mono truncate max-w-full"
                     title={resolveModalItem.entityId}
                   >
                     {resolveModalItem.entityId}
@@ -479,41 +493,41 @@ export default function IncidentsPage() {
               <button
                 type="button"
                 onClick={() => setResolveModalItem(null)}
-                className="text-slate-500 hover:text-slate-300 p-1 cursor-pointer shrink-0"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               Dismissing this incident marks it as reviewed and removes it from the active operator quarantine feed. The package retains its Disputed status for both merchant and customer, as the merchant may need to dispatch a replacement shipment.
             </p>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-slate-400 block">
-                Platform Action & Merchant Outreach Notes (Optional)
+              <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block">
+                Platform Action &amp; Merchant Outreach Notes (Optional)
               </label>
               <textarea
                 value={resolveNotes}
                 onChange={(e) => setResolveNotes(e.target.value)}
                 placeholder="e.g. Merchant contacted by platform regarding handover discrepancy; merchant advised to re-dispatch replacement..."
                 rows={3}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 transition-colors resize-none"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 transition-colors resize-none shadow-2xs"
               />
             </div>
 
             {resolveMutation.isError && (
-              <div className="p-2.5 rounded-lg bg-red-950/60 border border-red-800/60 text-xs text-red-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+              <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span className="truncate">{resolveMutation.error?.message || "Failed to resolve incident"}</span>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setResolveModalItem(null)}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -527,7 +541,7 @@ export default function IncidentsPage() {
                     notes: resolveNotes,
                   })
                 }
-                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
               >
                 {resolveMutation.isPending ? "Processing..." : "Confirm Resolution"}
               </button>
