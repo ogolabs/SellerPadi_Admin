@@ -342,3 +342,32 @@ export const AdminInventoryProduct: Model<IInventoryProductDoc> =
   mongoose.models.AdminInventoryProduct ||
   mongoose.model<IInventoryProductDoc>("AdminInventoryProduct", InventoryProductSchema, "inventoryproducts");
 
+export interface IAdminAuditLogDoc {
+  _id: string;
+  adminEmail: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details?: Record<string, unknown> | null;
+  ipAddress?: string | null;
+  createdAt: Date;
+}
+
+const AdminAuditLogSchema = new Schema<IAdminAuditLogDoc>(
+  {
+    _id: { type: String, required: true },
+    adminEmail: { type: String, required: true, index: true },
+    action: { type: String, required: true, index: true },
+    targetType: { type: String, required: true, index: true },
+    targetId: { type: String, required: true, index: true },
+    details: { type: Schema.Types.Mixed, default: null },
+    ipAddress: { type: String, default: null },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: "admin_audit_logs" }
+);
+
+export const AdminAuditLog: Model<IAdminAuditLogDoc> =
+  mongoose.models.AdminAuditLog ||
+  mongoose.model<IAdminAuditLogDoc>("AdminAuditLog", AdminAuditLogSchema, "admin_audit_logs");
+
+

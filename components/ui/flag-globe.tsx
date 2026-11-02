@@ -314,6 +314,8 @@ const TEXTURE_RETRY_MS = [150, 600, 1500];
 const BRAND_BASE: RGB = [0.04, 0.06, 0.12]; // Deep Obsidian Slate
 const BRAND_GLOW: RGB = [0.06, 0.55, 0.40]; // Receipt Emerald Rim Glow
 const BRAND_MARKER: RGB = [0.06, 0.72, 0.50]; // Emerald
+const LIGHT_BASE: RGB = [0.72, 0.78, 0.84]; // Sleek fintech slate-blue continental dots
+const LIGHT_GLOW: RGB = [1, 1, 1]; // Crisp white atmospheric rim glow
 
 const WIDTH_CLASS = /(?:^|\s)(?:[\w-]+:)*!?(?:w|size)-/;
 const HEIGHT_CLASS = /(?:^|\s)(?:[\w-]+:)*!?(?:h|size|aspect)-/;
@@ -601,19 +603,22 @@ export function FlagGlobe({
     host.appendChild(canvas);
 
     const s = live.current;
+    const isDark = s.dark;
+    const base = isDark ? BRAND_BASE : LIGHT_BASE;
+    const glow = isDark ? BRAND_GLOW : LIGHT_GLOW;
     const globe = createGlobe(canvas, {
       devicePixelRatio: dpr,
       width: s.size,
       height: s.size,
       phi: s.phi,
       theta: s.theta,
-      dark: 1,
+      dark: isDark ? 1 : 0,
       diffuse: 1.2,
       mapSamples: 16000,
       mapBrightness: 6,
-      baseColor: BRAND_BASE,
+      baseColor: base,
       markerColor: BRAND_MARKER,
-      glowColor: BRAND_GLOW,
+      glowColor: glow,
       markers: markerDots ? s.flags.map((f) => ({ location: f.location, size: 0.035 })) : [],
       markerElevation: 0.02,
     });
@@ -709,12 +714,15 @@ export function FlagGlobe({
     if (!root) return;
     const globe = globeRef.current;
     if (!globe) return;
-    const base = (baseColor && resolveColor(root, [baseColor])) || BRAND_BASE;
-    const glow = (glowColor && resolveColor(root, [glowColor])) || BRAND_GLOW;
+    const isDark = dark;
+    const defaultBase = isDark ? BRAND_BASE : LIGHT_BASE;
+    const defaultGlow = isDark ? BRAND_GLOW : LIGHT_GLOW;
+    const base = (baseColor && resolveColor(root, [baseColor])) || defaultBase;
+    const glow = (glowColor && resolveColor(root, [glowColor])) || defaultGlow;
     const marker = resolveColor(root, themeToken("primary")) || BRAND_MARKER;
 
     globe.update({
-      dark: 1,
+      dark: isDark ? 1 : 0,
       diffuse: 1.2,
       mapBrightness: 6,
       baseColor: base,
@@ -723,7 +731,7 @@ export function FlagGlobe({
       markers: markerDots ? flags.map((f) => ({ location: f.location, size: 0.035 })) : [],
     });
     kickRef.current();
-  }, [ready, glVersion, baseColor, glowColor, markerDots, flags]);
+  }, [ready, glVersion, baseColor, glowColor, markerDots, flags, dark]);
 
   const rotateBy = (delta: number) => {
     const s = live.current;
@@ -752,7 +760,7 @@ export function FlagGlobe({
       tabIndex={0}
       className={cx(
         "relative isolate select-none rounded-full",
-        "focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
+        "focus-visible:ring-2 focus-visible:ring-emerald-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950",
         size === undefined && !WIDTH_CLASS.test(consumerClasses) && "w-full",
         size === undefined && !HEIGHT_CLASS.test(consumerClasses) && "aspect-square",
         !MAX_WIDTH_CLASS.test(consumerClasses) && "max-w-full",
@@ -773,7 +781,7 @@ export function FlagGlobe({
         className="absolute"
         style={{ left: "50%", top: "50%", width: px, height: px, transform: "translate(-50%, -50%)" }}
       >
-        {stars && (
+        {stars && dark && (
           <div aria-hidden className="pointer-events-none absolute inset-0 opacity-60">
             {STARS.map((star) => (
               <span
@@ -796,7 +804,7 @@ export function FlagGlobe({
         )}
 
         {glState === "unavailable" && (
-          <div aria-hidden className="pointer-events-none absolute inset-[10%] rounded-full border border-slate-800 bg-slate-950/40" />
+          <div aria-hidden className="pointer-events-none absolute inset-[10%] rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-950/40" />
         )}
 
         <div
