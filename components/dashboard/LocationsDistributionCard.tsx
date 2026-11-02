@@ -106,7 +106,7 @@ export function LocationsDistributionCard({
         </div>
 
         {/* 3D WebGL Globe Viewport */}
-        <div className="relative w-full h-[320px] sm:h-[360px] flex items-center justify-center overflow-hidden my-2">
+        <div className="relative w-full h-80 sm:h-90 flex items-center justify-center overflow-hidden my-2">
           <FlagGlobe
             markers={globeMarkers}
             autoRotate={true}
@@ -156,7 +156,7 @@ export function LocationsDistributionCard({
                     <div className="flex items-center justify-between text-xs gap-2 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 truncate">
                         {/* SVG Country Flag Badge */}
-                        <div className="w-5 h-3.5 rounded-[2px] overflow-hidden border border-slate-200 dark:border-slate-700/80 shrink-0 shadow-xs">
+                        <div className="w-5 h-3.5 rounded-xs overflow-hidden border border-slate-200 dark:border-slate-700/80 shrink-0 shadow-xs">
                           {Flag ? (
                             <Flag width="100%" height="100%" className="block object-cover" />
                           ) : (
