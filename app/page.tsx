@@ -12,12 +12,15 @@ import {
   Layers,
   RefreshCw,
   Package,
+  Boxes,
   ShieldCheck,
   Receipt,
   CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MetricSparklineCard } from "@/components/dashboard/MetricSparklineCard";
+import { MonetizationCard } from "@/components/dashboard/MonetizationCard";
+import { SubscriptionDistributionCard } from "@/components/dashboard/SubscriptionDistributionCard";
 import { ActivityVolumeChart } from "@/components/dashboard/ActivityVolumeChart";
 import { LocationsDistributionCard } from "@/components/dashboard/LocationsDistributionCard";
 import { RelayerQuotaCard } from "@/components/dashboard/RelayerQuotaCard";
@@ -54,6 +57,39 @@ interface MetricsResponse {
     issuedReceipts: number;
     voidedReceipts: number;
     merchants: number;
+  };
+  mrr?: {
+    totalUsd: number;
+    formattedTotalUsd: string;
+    domesticNgn: number;
+    formattedDomesticNgn: string;
+    internationalUsd: number;
+    formattedInternationalUsd: string;
+    activePaidSubscribers: number;
+    conversionRatePercent: string;
+  };
+  overage?: {
+    totalNgn: number;
+    totalUsd: number;
+    formattedNgn: string;
+    formattedUsd: string;
+  };
+  plans?: {
+    breakdown: Array<{
+      id: "free" | "starter_500" | "growth_1000" | "business_2500" | "scale_5000";
+      name: string;
+      merchantCount: number;
+      percentage: number;
+      monthlyOpsQuota: number;
+      priceNgn: number;
+      priceUsd: number;
+    }>;
+    payingMerchants: number;
+    freeMerchants: number;
+  };
+  inventory?: {
+    totalProducts: number;
+    lowStockCount: number;
   };
   relayer: {
     address: string;
@@ -104,13 +140,14 @@ interface MetricsResponse {
 async function fetchPlatformMetrics(): Promise<MetricsResponse> {
   const res = await fetch("/api/metrics");
   if (!res.ok) {
-    throw new Error("Failed to fetch platform metrics");
+    const errorBody = await res.json().catch(() => null);
+    throw new Error(errorBody?.error || `Failed to fetch platform metrics (${res.status})`);
   }
   return res.json();
 }
 
 export default function AdminDashboardPage() {
-  const { data, isLoading, isFetching, refetch } = useQuery<MetricsResponse>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<MetricsResponse>({
     queryKey: ["admin-metrics"],
     queryFn: fetchPlatformMetrics,
     staleTime: QUERY_TIMINGS.METRICS_STALE_MS,
@@ -199,6 +236,21 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {isError && (
+        <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-200 text-xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{error instanceof Error ? error.message : "Failed to load live platform metrics."}</span>
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="px-2.5 py-1 rounded bg-rose-900/80 hover:bg-rose-800 text-white font-medium transition-colors shrink-0 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Top 4 KPI Cards with Responsive Typography & Sparklines */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Active GMV */}
@@ -258,8 +310,8 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Secondary KPI Strip: 4 Compact Telemetry Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Secondary KPI Strip: Compact Telemetry Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Tile 1: Sales Receipts Summary */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -280,7 +332,29 @@ export default function AdminDashboardPage() {
           </span>
         </Card>
 
-        {/* Tile 2: Custody Handover */}
+        {/* Tile 2: Retail Inventory Telemetry */}
+        <Card className="p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
+              <Boxes className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white truncate">
+                {data?.inventory?.totalProducts || 0} Catalog SKUs
+              </div>
+              <div className="text-[11px] text-slate-400 truncate">
+                {(data?.inventory?.lowStockCount || 0) === 0
+                  ? "Stock levels healthy"
+                  : `${data?.inventory?.lowStockCount} Low stock alerts`}
+              </div>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+            Stock
+          </span>
+        </Card>
+
+        {/* Tile 3: Custody Handover */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-indigo-950/70 border border-indigo-800/60 text-indigo-400 flex items-center justify-center shrink-0">
@@ -300,7 +374,7 @@ export default function AdminDashboardPage() {
           </span>
         </Card>
 
-        {/* Tile 3: Relayer Fuel Reserve */}
+        {/* Tile 4: Relayer Fuel Reserve */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
@@ -320,7 +394,7 @@ export default function AdminDashboardPage() {
           </span>
         </Card>
 
-        {/* Tile 4: System Signals & Quota */}
+        {/* Tile 5: System Signals & Quota */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center shrink-0">
@@ -339,6 +413,25 @@ export default function AdminDashboardPage() {
             Live SLA
           </span>
         </Card>
+      </div>
+
+      {/* Platform Monetization & SaaS Plan Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+        <div className="lg:col-span-7">
+          <MonetizationCard
+            mrr={data?.mrr}
+            overage={data?.overage}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="lg:col-span-5">
+          <SubscriptionDistributionCard
+            plans={data?.plans}
+            totalMerchants={data?.counts.merchants}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Middle Section: 7-Day Activity Summary (Left) & Locations (Right) */}

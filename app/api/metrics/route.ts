@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectAdminDb, AdminReceipt, AdminShipment, AdminUser } from "@/lib/db";
+import { connectAdminDb, AdminReceipt, AdminShipment, AdminUser, AdminInventoryProduct } from "@/lib/db";
 import { getRelayerStatus } from "@/lib/chain";
 import {
   getPendingQueueReceiptFilter,
@@ -24,6 +24,17 @@ const DEFAULT_CURRENCY_MAP: Record<string, string> = {
   JP: "JPY",
   CN: "CNY",
   IN: "INR",
+};
+
+const TIER_PRICING: Record<
+  string,
+  { name: string; ngn: number; usd: number; quota: number }
+> = {
+  free: { name: "Free Tier", ngn: 0, usd: 0, quota: 100 },
+  starter_500: { name: "Starter 500", ngn: 500, usd: 2.01, quota: 500 },
+  growth_1000: { name: "Growth 1,000", ngn: 1000, usd: 3.03, quota: 1000 },
+  business_2500: { name: "Business 2,500", ngn: 2500, usd: 6.07, quota: 2500 },
+  scale_5000: { name: "Scale 5,000", ngn: 5000, usd: 11.14, quota: 5000 },
 };
 
 let regionNames: Intl.DisplayNames | null = null;
@@ -62,6 +73,8 @@ export async function GET() {
       countryAgg,
       latestReceipts,
       latestShipments,
+      planStatsAgg,
+      inventoryStatsAgg,
     ] = await Promise.all([
       AdminReceipt.aggregate<{ _id: string; totalGmv: number; count: number }>([
         { $match: { status: { $in: ["Issued", "issued"] } } },
@@ -149,6 +162,102 @@ export async function GET() {
         .sort({ createdAt: -1 })
         .limit(4)
         .lean(),
+      AdminUser.aggregate<{
+        _id: string;
+        count: number;
+        activeSubCount: number;
+        totalOverageNgn: number;
+        ngnPaidCount: number;
+        usdPaidCount: number;
+      }>([
+        {
+          $match: {
+            $or: [
+              { role: "merchant" },
+              { hasMerchantProfile: true },
+              { companyName: { $exists: true, $ne: null } },
+            ],
+          },
+        },
+        {
+          $group: {
+            _id: { $ifNull: ["$plan", "free"] },
+            count: { $sum: 1 },
+            activeSubCount: {
+              $sum: {
+                $cond: [
+                  { $and: [{ $eq: ["$subscriptionActive", true] }, { $ne: ["$plan", "free"] }] },
+                  1,
+                  0,
+                ],
+              },
+            },
+            totalOverageNgn: { $sum: { $ifNull: ["$overageCharges", 0] } },
+            ngnPaidCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$subscriptionActive", true] },
+                      { $ne: ["$plan", "free"] },
+                      {
+                        $or: [
+                          { $eq: ["$currency", "NGN"] },
+                          { $in: ["$country", ["NG", "Nigeria", null, ""]] },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            usdPaidCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$subscriptionActive", true] },
+                      { $ne: ["$plan", "free"] },
+                      {
+                        $and: [
+                          { $ne: ["$currency", "NGN"] },
+                          { $not: [{ $in: ["$country", ["NG", "Nigeria", null, ""]] }] },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
+      AdminInventoryProduct.aggregate<{ _id: null; totalItems: number; lowStockItems: number }>([
+        {
+          $group: {
+            _id: null,
+            totalItems: { $sum: 1 },
+            lowStockItems: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$trackStock", true] },
+                      { $lte: ["$totalStock", { $ifNull: ["$lowStockAlert", 5] }] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
     ]);
 
     // Format currency sums for issued receipts (Active GMV normalized in USD and tracked by currency)
@@ -211,8 +320,8 @@ export async function GET() {
     // Evaluate live queue & incident counts
     const pendingQueueCount = pendingReceiptCount + pendingShipmentCount;
     const unanchoredCount = unanchoredReceiptCount + unanchoredShipmentCount;
-    const relayerBalanceNum = parseFloat(relayerStatus.balanceEtn || "0");
-    const relayerGasIncident = relayerBalanceNum < 50 ? 1 : 0;
+    const relayerBalanceNum = parseFloat(relayerStatus.balanceAvax || relayerStatus.balanceEtn || "0");
+    const relayerGasIncident = relayerBalanceNum < 0.5 ? 1 : 0;
     const totalActiveIncidents = pendingQueueCount + activeDisputesCount + relayerGasIncident;
 
     // Format 7-Day Continuous Time Series
@@ -353,6 +462,68 @@ export async function GET() {
     const totalGmvNgnEquiv = convertUsdToNgn(totalGmvUsd);
     const totalVoidedNgnEquiv = convertUsdToNgn(totalVoidedUsd);
 
+    // -------------------------------------------------------------
+    // Subscription Plans, MRR & Universal Overage Calculations
+    // -------------------------------------------------------------
+    const planCountsMap = new Map<string, { total: number; ngnPaid: number; usdPaid: number; overage: number }>();
+    for (const key of Object.keys(TIER_PRICING)) {
+      planCountsMap.set(key, { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 });
+    }
+
+    let totalOverageNgn = 0;
+    let domesticMrrNgn = 0;
+    let internationalMrrUsd = 0;
+    let totalPaidSubscribers = 0;
+
+    for (const p of planStatsAgg) {
+      const planKey = (p._id || "free").toLowerCase();
+      const existing = planCountsMap.get(planKey) || { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 };
+      existing.total += p.count;
+      existing.ngnPaid += p.ngnPaidCount;
+      existing.usdPaid += p.usdPaidCount;
+      existing.overage += p.totalOverageNgn;
+      planCountsMap.set(planKey, existing);
+
+      totalOverageNgn += p.totalOverageNgn;
+      totalPaidSubscribers += p.ngnPaidCount + p.usdPaidCount;
+
+      const pricing = TIER_PRICING[planKey] || { ngn: 0, usd: 0 };
+      domesticMrrNgn += p.ngnPaidCount * pricing.ngn;
+      internationalMrrUsd += p.usdPaidCount * pricing.usd;
+    }
+
+    const domesticMrrUsdEquiv = convertToUsd(domesticMrrNgn, "NGN");
+    const totalMrrUsd = internationalMrrUsd + domesticMrrUsdEquiv;
+    const totalOverageUsd = convertToUsd(totalOverageNgn, "NGN");
+
+    const totalMerchantsCount = merchantCount || 1;
+    const paidConversionRate = ((totalPaidSubscribers / totalMerchantsCount) * 100).toFixed(1);
+
+    const orderedPlanKeys = [
+      "free",
+      "starter_500",
+      "growth_1000",
+      "business_2500",
+      "scale_5000",
+    ] as const;
+
+    const planBreakdown = orderedPlanKeys.map((key) => {
+      const info = TIER_PRICING[key];
+      const stats = planCountsMap.get(key) || { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 };
+      const percentage = Math.round((stats.total / totalMerchantsCount) * 100);
+      return {
+        id: key,
+        name: info.name,
+        merchantCount: stats.total,
+        percentage,
+        monthlyOpsQuota: info.quota,
+        priceNgn: info.ngn,
+        priceUsd: info.usd,
+      };
+    });
+
+    const inventoryData = inventoryStatsAgg[0] || { totalItems: 0, lowStockItems: 0 };
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -365,6 +536,31 @@ export async function GET() {
         formattedNgnEquivalent: formatMoney(totalGmvNgnEquiv, "NGN", { maximumFractionDigits: 0 }),
         byCurrency,
         primaryCurrency: "USD",
+      },
+      mrr: {
+        totalUsd: totalMrrUsd,
+        formattedTotalUsd: formatMoney(totalMrrUsd, "USD"),
+        domesticNgn: domesticMrrNgn,
+        formattedDomesticNgn: formatMoney(domesticMrrNgn, "NGN"),
+        internationalUsd: internationalMrrUsd,
+        formattedInternationalUsd: formatMoney(internationalMrrUsd, "USD"),
+        activePaidSubscribers: totalPaidSubscribers,
+        conversionRatePercent: paidConversionRate,
+      },
+      overage: {
+        totalNgn: totalOverageNgn,
+        formattedNgn: formatMoney(totalOverageNgn, "NGN"),
+        totalUsd: totalOverageUsd,
+        formattedUsd: formatMoney(totalOverageUsd, "USD"),
+      },
+      plans: {
+        breakdown: planBreakdown,
+        payingMerchants: totalPaidSubscribers,
+        freeMerchants: planCountsMap.get("free")?.total || 0,
+      },
+      inventory: {
+        totalProducts: inventoryData.totalItems,
+        lowStockCount: inventoryData.lowStockItems,
       },
       voided: {
         count: voidedReceiptCount,
@@ -385,6 +581,7 @@ export async function GET() {
       relayer: {
         address: relayerStatus.address,
         isLowBalance: relayerStatus.isLowBalance,
+        balanceAvax: relayerStatus.balanceAvax,
         balanceEtn: relayerStatus.balanceEtn,
         unanchoredQueue: pendingQueueCount,
         pendingQueue: pendingQueueCount,
