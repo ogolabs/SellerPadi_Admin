@@ -871,7 +871,7 @@ export function FlagGlobe({
                 style={{ left: 0, top: 0 }}
               >
                 <div
-                  className="overflow-hidden rounded-[2px] bg-slate-900 leading-none shadow-sm border border-slate-700/60"
+                  className="overflow-hidden rounded-xs bg-slate-900 leading-none shadow-sm border border-slate-700/60"
                   style={{ width: flagWidth, height: Math.round((flagWidth * 2) / 3) }}
                   title={flag.label}
                 >

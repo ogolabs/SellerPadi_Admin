@@ -6,6 +6,66 @@ import {
   healDriftedAnchors,
 } from "@/lib/ledger-queries";
 
+export interface ReceiptItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface ReceiptDetail {
+  receiptNumber?: string;
+  items: ReceiptItem[];
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  subtotal?: number;
+  tax?: number;
+  discount?: number;
+  total: number;
+  currency: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  issuedByName?: string;
+  issuedByRole?: string;
+  branchName?: string;
+  voidReason?: string | null;
+  voidedAt?: string | null;
+  voidedBy?: string | null;
+  receiptHash?: string | null;
+  onChainTxHash?: string | null;
+}
+
+export interface ShipmentCheckpoint {
+  event?: string;
+  status?: string;
+  location?: string;
+  note?: string;
+  timestamp?: string;
+  onChainTxHash?: string | null;
+}
+
+export interface ShipmentDetail {
+  trackingCode?: string;
+  packageName?: string;
+  destination?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+  senderName?: string;
+  senderPhone?: string;
+  branchName?: string;
+  receiptNumber?: string;
+  notes?: string;
+  isDisputed: boolean;
+  disputeReason?: string | null;
+  disputeResolved: boolean;
+  resolutionNotes?: string | null;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  events: ShipmentCheckpoint[];
+  onChainTxHash?: string | null;
+}
+
 export interface UnifiedRecordItem {
   id: string;
   rawId?: string;
@@ -16,7 +76,9 @@ export interface UnifiedRecordItem {
   status: string;
   isVoidedOrDisputed: boolean;
   onChainStatus: string;
-  createdAt: Date;
+  createdAt: Date | string;
+  receipt?: ReceiptDetail;
+  shipment?: ShipmentDetail;
 }
 
 export async function GET(req: NextRequest) {
@@ -238,6 +300,7 @@ function mapReceiptRecord(
   r: IReceiptDoc,
   merchantLookupMap: Map<string, string>
 ): UnifiedRecordItem {
+  const doc = r as unknown as Record<string, unknown>;
   const isVoided = (r.status || "").toLowerCase() === "voided";
   const merchantName =
     merchantLookupMap.get((r.merchantAddress || "").toLowerCase()) ||
@@ -250,6 +313,52 @@ function mapReceiptRecord(
       (typeof r.onChainTxHash === "string" && r.onChainTxHash.startsWith("0x"))
   );
 
+  const rawItems = Array.isArray(doc.items) ? doc.items : [];
+  const items: ReceiptItem[] = rawItems.map((item) => {
+    const it = item as Record<string, unknown>;
+    const qty = typeof it.quantity === "number" ? it.quantity : 1;
+    const price = typeof it.unitPrice === "number" ? it.unitPrice : 0;
+    const tot = typeof it.total === "number" ? it.total : qty * price;
+    return {
+      name: (it.name as string) || "Item",
+      quantity: qty,
+      unitPrice: price,
+      total: tot,
+    };
+  });
+
+  const issuedByObj = doc.issuedBy as Record<string, unknown> | undefined;
+  const voidedByObj = doc.voidedBy as Record<string, unknown> | string | undefined;
+  const voidedByStr =
+    typeof voidedByObj === "object" && voidedByObj !== null
+      ? ((voidedByObj.name as string) || (voidedByObj.address as string) || null)
+      : typeof voidedByObj === "string"
+      ? voidedByObj
+      : null;
+
+  const receiptDetail: ReceiptDetail = {
+    receiptNumber: (doc.receiptNumber as string) || r._id,
+    items,
+    customerName: (doc.customerName as string) || undefined,
+    customerPhone: (doc.customerPhone as string) || undefined,
+    customerEmail: (doc.customerEmail as string) || undefined,
+    subtotal: typeof doc.subtotal === "number" ? doc.subtotal : undefined,
+    tax: typeof doc.tax === "number" ? doc.tax : undefined,
+    discount: typeof doc.discount === "number" ? doc.discount : undefined,
+    total: r.total,
+    currency: r.currency || "NGN",
+    paymentMethod: r.paymentMethod,
+    paymentStatus: r.paymentStatus,
+    issuedByName: (issuedByObj?.name as string) || undefined,
+    issuedByRole: (issuedByObj?.role as string) || undefined,
+    branchName: (doc.branchName as string) || undefined,
+    voidReason: (doc.voidReason as string) || (doc.void_reason as string) || null,
+    voidedAt: doc.voidedAt ? new Date(doc.voidedAt as string | Date).toISOString() : null,
+    voidedBy: voidedByStr,
+    receiptHash: (doc.receiptHash as string) || (doc.hash as string) || null,
+    onChainTxHash: r.onChainTxHash || (doc.txHash as string) || null,
+  };
+
   return {
     id: r._id,
     rawId: r._id,
@@ -261,6 +370,7 @@ function mapReceiptRecord(
     isVoidedOrDisputed: isVoided,
     onChainStatus: isAnchored ? "anchored" : (r.onChainStatus || "pending"),
     createdAt: r.createdAt,
+    receipt: receiptDetail,
   };
 }
 
@@ -268,6 +378,7 @@ function mapShipmentRecord(
   s: IShipmentDoc,
   merchantLookupMap: Map<string, string>
 ): UnifiedRecordItem {
+  const doc = s as unknown as Record<string, unknown>;
   const isDisputed = Boolean(s.isDisputed) || (s.status || "").toLowerCase() === "disputed";
   const normalId =
     s.trackingCode ||
@@ -295,8 +406,21 @@ function mapShipmentRecord(
     detail = "Tracked Parcel";
   }
 
+  const rawEvents = Array.isArray(s.events) ? s.events : [];
+  const events: ShipmentCheckpoint[] = rawEvents.map((e) => {
+    const ev = e as Record<string, unknown>;
+    return {
+      event: (ev.event as string) || (ev.status as string) || "Status Update",
+      status: (ev.status as string) || undefined,
+      location: (ev.location as string) || undefined,
+      note: (ev.note as string) || (ev.resolutionNotes as string) || undefined,
+      timestamp: ev.timestamp ? new Date(ev.timestamp as string | Date).toISOString() : undefined,
+      onChainTxHash: (ev.onChainTxHash as string) || null,
+    };
+  });
+
   const hasEventTx = Boolean(
-    s.events?.some(
+    events.some(
       (e) => typeof e?.onChainTxHash === "string" && e.onChainTxHash.startsWith("0x")
     )
   );
@@ -305,6 +429,27 @@ function mapShipmentRecord(
       (typeof s.onChainTxHash === "string" && s.onChainTxHash.startsWith("0x")) ||
       hasEventTx
   );
+
+  const shipmentDetail: ShipmentDetail = {
+    trackingCode: normalId,
+    packageName: (meta?.name as string) || "Tracked Package",
+    destination: (meta?.destination as string) || undefined,
+    receiverName: (meta?.receiverName as string) || undefined,
+    receiverPhone: (meta?.receiverPhone as string) || undefined,
+    senderName: (meta?.senderName as string) || s.createdBy?.name || undefined,
+    senderPhone: (meta?.senderPhone as string) || undefined,
+    branchName: s.createdBy?.branchName || (meta?.branchName as string) || undefined,
+    receiptNumber: (meta?.receiptNumber as string) || undefined,
+    notes: (meta?.notes as string) || undefined,
+    isDisputed,
+    disputeReason: (doc.disputeReason as string) || (meta?.disputeReason as string) || null,
+    disputeResolved: Boolean(s.disputeResolved),
+    resolutionNotes: s.resolutionNotes || null,
+    resolvedAt: s.resolvedAt ? new Date(s.resolvedAt).toISOString() : null,
+    resolvedBy: s.resolvedBy || null,
+    events,
+    onChainTxHash: s.onChainTxHash || (doc.txHash as string) || null,
+  };
 
   return {
     id: normalId,
@@ -317,5 +462,6 @@ function mapShipmentRecord(
     isVoidedOrDisputed: isDisputed,
     onChainStatus: isAnchored ? "anchored" : (s.onChainStatus || "pending"),
     createdAt: s.createdAt,
+    shipment: shipmentDetail,
   };
 }
