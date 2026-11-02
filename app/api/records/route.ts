@@ -45,14 +45,18 @@ export async function GET(req: NextRequest) {
         const lowerAddress = q.toLowerCase();
         receiptFilter.merchantAddress = lowerAddress;
         shipmentFilter.shipperAddress = lowerAddress;
-      } else if (q.toUpperCase().startsWith("REC-")) {
-        // Direct primary key index lookup on receipts
-        receiptFilter._id = q.toUpperCase();
+      } else if (q.toUpperCase().startsWith("SP-REC-") || q.toUpperCase().startsWith("REC-")) {
+        // Direct index lookup on receipts by receiptNumber or on-chain _id
+        receiptFilter.$or = [
+          { receiptNumber: q.toUpperCase() },
+          { receiptNumber: q },
+          { _id: q.toLowerCase() },
+          { _id: q },
+        ];
         shipmentFilter._id = { $exists: false };
       } else if (
         q.toUpperCase().startsWith("SHPT-") ||
-        q.toUpperCase().startsWith("RCV-") ||
-        q.toUpperCase().startsWith("RST-") ||
+        q.toUpperCase().startsWith("SP-") ||
         q.toUpperCase().startsWith("PKG-")
       ) {
         // Direct indexed lookup on shipment tracking code

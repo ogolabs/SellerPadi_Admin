@@ -148,10 +148,10 @@ export function AdminShell({ children }: AdminShellProps) {
           <div className="mb-3 px-1">
             <div className="flex items-center gap-2 mb-1">
               <Radio className="w-3 h-3 text-emerald-400" />
-              <span className="text-[11px] font-mono text-emerald-400 font-medium">Electroneum</span>
+              <span className="text-[11px] font-mono text-emerald-400 font-medium">Avalanche C-Chain</span>
             </div>
             <p className="text-xs text-slate-300 font-medium truncate">
-              {session?.email || "admin@SellerPadi.co"}
+              {session?.email || ""}
             </p>
             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-mono">
               {session?.role || "Operator"}

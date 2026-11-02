@@ -26,7 +26,7 @@ export function getPendingQueueShipmentFilter(): Record<string, unknown> {
 }
 
 /**
- * Filter for receipts that have NOT yet been anchored on the Electroneum blockchain.
+ * Filter for receipts that have NOT yet been anchored on the Avalanche C-Chain blockchain.
  * By definition, any receipt with a valid, non-empty onChainTxHash is already recorded
  * on-chain and CANNOT match this filter.
  */
@@ -61,7 +61,7 @@ export function getUnanchoredReceiptFilter(olderThan?: Date): Record<string, unk
 }
 
 /**
- * Filter for receipts that are cryptographically anchored on the Electroneum blockchain.
+ * Filter for receipts that are cryptographically anchored on the Avalanche C-Chain blockchain.
  * Matches either explicit onChainStatus "anchored" OR any verified 0x... on-chain transaction hash.
  */
 export function getAnchoredReceiptFilter(): Record<string, unknown> {
@@ -74,7 +74,7 @@ export function getAnchoredReceiptFilter(): Record<string, unknown> {
 }
 
 /**
- * Filter for shipments that have NOT yet been anchored on the Electroneum blockchain.
+ * Filter for shipments that have NOT yet been anchored on the Avalanche C-Chain blockchain.
  * Matches shipments that are not marked as anchored, have no root onChainTxHash,
  * and have no event containing a valid 0x on-chain transaction hash.
  */
@@ -97,7 +97,7 @@ export function getUnanchoredShipmentFilter(olderThan?: Date): Record<string, un
 }
 
 /**
- * Filter for shipments that are cryptographically anchored on the Electroneum blockchain.
+ * Filter for shipments that are cryptographically anchored on the Avalanche C-Chain blockchain.
  * Matches either explicit onChainStatus "anchored" OR any verified 0x... on-chain transaction
  * hash at root or within any dispatch/transit/delivery event.
  */

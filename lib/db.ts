@@ -2,9 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export function getMongoUri(): { uri: string; isTestnet: boolean } {
   const isNetTestnet = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() !== "mainnet";
-  const uri = isNetTestnet
-    ? (process.env.MONGODB_URI_TESTNET || process.env.MONGODB_URI || "")
-    : (process.env.MONGODB_URI || "");
+  const uri = (process.env.MONGODB_URI || "").trim();
   return { uri, isTestnet: isNetTestnet };
 }
 
@@ -19,7 +17,7 @@ export async function connectAdminDb(): Promise<typeof mongoose> {
   const { uri } = getMongoUri();
 
   if (!uri) {
-    throw new Error("MONGODB_URI or MONGODB_URI_TESTNET environment variable is not defined");
+    throw new Error("MONGODB_URI environment variable is not defined");
   }
 
   const currentCache = globalThis.adminMongooseConnection || { conn: null, promise: null };

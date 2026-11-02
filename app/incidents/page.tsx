@@ -215,13 +215,13 @@ export default function IncidentsPage() {
       </div>
 
       {/* Relayer Fuel Health Alert Banner */}
-      {!isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 10 ? (
+      {!isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.1 ? (
         <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
             <span>
               <strong className="text-white">CRITICAL RELAYER FUEL:</strong> Current balance is{" "}
-              <strong className="font-mono text-white">{summary.relayerGas} ETN</strong> (&lt; 10 ETN threshold).
+              <strong className="font-mono text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.10 AVAX threshold).
               Risk of immediate transaction revert!
             </span>
           </div>
@@ -232,13 +232,13 @@ export default function IncidentsPage() {
             Inspect Infrastructure
           </Link>
         </div>
-      ) : !isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 50 ? (
+      ) : !isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.5 ? (
         <div className="p-3.5 rounded-xl bg-slate-900/80 border border-blue-900/60 text-slate-300 text-xs flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 text-blue-400 shrink-0" />
             <span>
               <strong className="text-white">Relayer Fuel Warning:</strong> Current balance is{" "}
-              <strong className="font-mono text-white">{summary.relayerGas} ETN</strong> (&lt; 50 ETN threshold).
+              <strong className="font-mono text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.50 AVAX threshold).
               Fuel top-up advised to maintain smooth transaction throughput.
             </span>
           </div>
@@ -302,7 +302,7 @@ export default function IncidentsPage() {
         {isLoading ? (
           <div className="p-12 text-center text-slate-400 space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-500" />
-            <p className="text-xs">Evaluating incident telemetry from MongoDB & Electroneum node...</p>
+            <p className="text-xs">Evaluating incident telemetry from MongoDB & Avalanche C-Chain node...</p>
           </div>
         ) : filteredIncidents.length === 0 ? (
           <div className="p-12 text-center space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">

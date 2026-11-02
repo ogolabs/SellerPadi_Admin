@@ -36,12 +36,14 @@ interface TelemetryData {
   };
   relayer: {
     address: string;
-    balanceEtn: string;
+    balanceAvax?: string;
+    balanceEtn?: string;
     isLowBalance: boolean;
     evmNonce: number;
     blockNumber: number;
     rpcLatencyMs: number;
     network: string;
+    explorerUrl?: string;
   };
   runtime: {
     nodeVersion: string;
@@ -99,7 +101,7 @@ export default function InfrastructurePage() {
             <span>Infrastructure &amp; Telemetry</span>
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Real-time diagnostics for MongoDB Atlas, Electroneum Relayer, and background queues.
+            Real-time diagnostics for MongoDB Atlas, Avalanche C-Chain Relayer, and background queues.
           </p>
         </div>
 
@@ -190,7 +192,7 @@ export default function InfrastructurePage() {
             </div>
           </div>
 
-          {/* Card 2: Electroneum Relayer Wallet */}
+          {/* Card 2: Avalanche C-Chain Relayer Wallet */}
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -199,24 +201,24 @@ export default function InfrastructurePage() {
                     <Radio className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-white">Electroneum Relayer</h2>
+                    <h2 className="text-sm font-semibold text-white">Avalanche Relayer</h2>
                     <span className="text-[11px] text-slate-400">On-Chain Witness &amp; Gas Tank</span>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-blue-950/80 text-blue-400 border border-blue-800/60 uppercase">
-                  {data?.relayer.network}
+                  {data?.relayer.network === "mainnet" ? "AVAX Mainnet" : "Fuji Testnet"}
                 </span>
               </div>
 
               <div className="space-y-3 pt-2">
                 <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800/60">
-                  <span className="text-slate-400">ETN Gas Balance</span>
+                  <span className="text-slate-400">AVAX Gas Balance</span>
                   <span
                     className={`font-mono font-medium ${
                       data?.relayer.isLowBalance ? "text-rose-400" : "text-emerald-400"
                     }`}
                   >
-                    {data?.relayer.balanceEtn} ETN
+                    {data?.relayer.balanceAvax ?? data?.relayer.balanceEtn} AVAX
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-800/60">
@@ -241,7 +243,18 @@ export default function InfrastructurePage() {
             </div>
 
             <div className="mt-6 pt-3 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono truncate">
-              {data?.relayer.address}
+              {data?.relayer.explorerUrl ? (
+                <a
+                  href={`${data.relayer.explorerUrl}/address/${data.relayer.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-blue-400 transition-colors inline-flex items-center gap-1"
+                >
+                  <span className="truncate">{data.relayer.address}</span>
+                </a>
+              ) : (
+                data?.relayer.address
+              )}
             </div>
           </div>
 

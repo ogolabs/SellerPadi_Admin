@@ -58,7 +58,8 @@ interface MetricsResponse {
   relayer: {
     address: string;
     isLowBalance: boolean;
-    balanceEtn: string;
+    balanceAvax?: string;
+    balanceEtn?: string;
     unanchoredQueue: number;
     network: "mainnet" | "testnet";
   };
@@ -131,7 +132,7 @@ export default function AdminDashboardPage() {
 
   const weeklyGmvUsd = data?.dailyActivity?.reduce((acc, d) => acc + (d.gmvUsd || 0), 0) || 0;
   const isMainnet = data?.relayer?.network === "mainnet";
-  const networkLabel = isMainnet ? "ETN Mainnet" : "ETN Testnet";
+  const networkLabel = isMainnet ? "AVAX Mainnet" : "Fuji Testnet";
 
   const currencyBreakdown = Object.values(data?.gmv.byCurrency || {})
     .filter((c) => c.total > 0)
@@ -307,10 +308,10 @@ export default function AdminDashboardPage() {
             </div>
             <div className="min-w-0">
               <div className="text-xs font-semibold text-white font-mono truncate">
-                {parseFloat(data?.relayer.balanceEtn || "0").toFixed(2)} ETN
+                {parseFloat(data?.relayer.balanceAvax ?? data?.relayer.balanceEtn ?? "0").toFixed(4)} AVAX
               </div>
               <div className="text-[11px] text-slate-400 truncate">
-                {data?.relayer.isLowBalance ? "Low fuel notice" : "Fuel reserve healthy"}
+                {data?.relayer.isLowBalance ? "Low fuel notice (< 0.5 AVAX)" : "Fuel reserve healthy"}
               </div>
             </div>
           </div>
@@ -363,6 +364,7 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-6">
           <RelayerQuotaCard
             address={data?.relayer.address || ""}
+            balanceAvax={data?.relayer.balanceAvax}
             balanceEtn={data?.relayer.balanceEtn || "0"}
             unanchoredQueue={data?.relayer.unanchoredQueue || 0}
             isLowBalance={Boolean(data?.relayer.isLowBalance)}
@@ -400,7 +402,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="leading-relaxed">
-            SellerPadi Institutional Ledger &bull; Electroneum SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
+            SellerPadi Institutional Ledger &bull; Avalanche C-Chain SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
           </span>
         </div>
         <div className="font-mono text-[11px] text-slate-500 shrink-0">

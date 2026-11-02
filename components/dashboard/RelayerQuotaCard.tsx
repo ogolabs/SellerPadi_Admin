@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 
 interface RelayerQuotaCardProps {
   address: string;
-  balanceEtn: string;
+  balanceAvax?: string;
+  balanceEtn?: string; // backward compatibility fallback
   unanchoredQueue: number;
   isLowBalance: boolean;
   network?: string;
@@ -14,14 +15,16 @@ interface RelayerQuotaCardProps {
 
 export function RelayerQuotaCard({
   address,
+  balanceAvax,
   balanceEtn,
   unanchoredQueue,
   isLowBalance,
   network = "testnet",
   isLoading = false,
 }: RelayerQuotaCardProps) {
-  const balanceNum = parseFloat(balanceEtn || "0");
-  const targetBuffer = 50; // 50 ETN warning threshold
+  const currentBalance = balanceAvax ?? balanceEtn ?? "0";
+  const balanceNum = parseFloat(currentBalance);
+  const targetBuffer = 1.0; // 1.0 AVAX target reserve buffer
   const fuelPercentage = Math.min(100, Math.round((balanceNum / targetBuffer) * 100));
 
   const shortenAddress = (addr: string) => {
@@ -40,7 +43,7 @@ export function RelayerQuotaCard({
             <span>Relayer Fuel &amp; Network Capacity</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Electroneum {isMainnet ? "Mainnet" : "Testnet"} transaction gas reserves and anchor queue.
+            Avalanche C-Chain {isMainnet ? "Mainnet" : "Fuji Testnet"} transaction gas reserves and anchor queue.
           </p>
         </div>
 
@@ -59,9 +62,9 @@ export function RelayerQuotaCard({
           <div className="text-slate-300 font-medium">
             Available Fuel:{" "}
             <span className="text-white font-bold font-mono text-base">
-              {isLoading ? "..." : `${balanceNum.toFixed(2)} ETN`}
+              {isLoading ? "..." : `${balanceNum.toFixed(4)} AVAX`}
             </span>{" "}
-            <span className="text-slate-500">({isLowBalance ? "< 50 ETN threshold" : "healthy reserve"})</span>
+            <span className="text-slate-500">({isLowBalance ? "< 0.50 AVAX threshold" : "healthy reserve"})</span>
           </div>
           <span
             className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border ${
@@ -81,7 +84,7 @@ export function RelayerQuotaCard({
               isLowBalance ? "bg-rose-500" : "bg-emerald-500"
             }`}
             style={{ width: `${Math.max(4, Math.min(100, fuelPercentage))}%` }}
-            title={`Relayer Gas: ${balanceNum.toFixed(2)} ETN`}
+            title={`Relayer Gas: ${balanceNum.toFixed(4)} AVAX`}
           />
         </div>
 
@@ -90,7 +93,7 @@ export function RelayerQuotaCard({
           <div className="bg-slate-950/60 border border-slate-800/60 rounded-lg p-2.5">
             <span className="text-slate-400 block text-[10px]">Active Network</span>
             <span className="text-white font-mono font-medium mt-0.5 block">
-              {isMainnet ? "ETN Mainnet" : "ETN Testnet"}
+              {isMainnet ? "AVAX Mainnet (43114)" : "Fuji Testnet (43113)"}
             </span>
           </div>
 

@@ -27,9 +27,9 @@ export async function POST(request: Request) {
     try {
       await sendAdminOtpEmail(email, code);
     } catch (mailError: unknown) {
-      const msg = mailError instanceof Error ? mailError.message : "Failed to send email";
+      const msg = mailError instanceof Error ? mailError.message : "Failed to dispatch verification email";
       return NextResponse.json(
-        { error: `Unable to dispatch verification email: ${msg}` },
+        { error: msg },
         { status: 500 }
       );
     }

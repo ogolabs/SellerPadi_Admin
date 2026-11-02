@@ -267,7 +267,7 @@ export default function UniversalLedgerPage() {
                       </div>
                       {r.rawId && r.rawId !== r.id && (
                         <div
-                          className="font-mono text-[10px] text-slate-500 truncate max-w-[150px] mt-0.5"
+                          className="font-mono text-[10px] text-slate-500 truncate max-w-37.5 mt-0.5"
                           title={`On-chain Hash: ${r.rawId}`}
                         >
                           {r.rawId.slice(0, 8)}...{r.rawId.slice(-6)}
@@ -292,11 +292,11 @@ export default function UniversalLedgerPage() {
 
                     {/* Merchant / Issuer */}
                     <td className="py-3.5 px-4">
-                      <div className="font-medium text-white truncate max-w-[160px]" title={r.merchantName || undefined}>
+                      <div className="font-medium text-white truncate max-w-40" title={r.merchantName || undefined}>
                         {r.merchantName || "Merchant Store"}
                       </div>
                       <div
-                        className="font-mono text-[11px] text-slate-400 truncate max-w-[140px] mt-0.5"
+                        className="font-mono text-[11px] text-slate-400 truncate max-w-35 mt-0.5"
                         title={r.merchantOrShipper}
                       >
                         {r.merchantOrShipper}

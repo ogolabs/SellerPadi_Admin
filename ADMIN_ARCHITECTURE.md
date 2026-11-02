@@ -21,7 +21,7 @@ SellerPadi operates as an npm monorepo with dedicated workspaces for specific do
 │             └─────────────────────────┬───────────────────────────────┘                │
 │                                       ▼                                                │
 │                        SHARED CORE DATA & INFRASTRUCTURE                               │
-│         MongoDB Atlas · Electroneum Smart Chain · Paystack / Stripe · Termii / Zepto   │
+│         MongoDB Atlas · Avalanche C-Chain · Paystack / Stripe · Termii / Zepto         │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,11 +87,11 @@ Provides deep operational diagnostics for the underlying databases, blockchain r
 - **Query Latencies**: Real-time monitoring of average read/write durations.
 - **Index Health**: Detection of unindexed queries, collection scans (`COLLSCAN`), or indexing bottlenecks.
 
-#### 2. Electroneum Relayer & Ledger Engine
+#### 2. Avalanche C-Chain Relayer & Ledger Engine
 
 - **Relayer Wallet Monitor**:
-  - Live ETN gas balance of `relayerAccount`.
-  - Automated threshold alerts when ETN balance drops below minimum reserves (e.g., `< 50 ETN`).
+  - Live AVAX gas balance of `relayerAccount`.
+  - Automated threshold alerts when AVAX balance drops below minimum reserves (e.g., `< 0.5 AVAX`).
 - **Nonce Synchronization State**:
   - Comparison of current EVM account nonce (`getTransactionCount`) vs. contract witness nonce (`userNonces`).
 - **Unanchored Queue Depth**:
@@ -101,7 +101,7 @@ Provides deep operational diagnostics for the underlying databases, blockchain r
   - Manual on-demand trigger to force an immediate ledger sweep.
   - Execution history log displaying processed, anchored, and failed counts.
 - **RPC Benchmark**:
-  - Latency and uptime monitoring across primary and fallback RPC endpoints (Official Electroneum vs. Ankr).
+  - Latency and uptime monitoring across primary and fallback RPC endpoints (Official Avalanche vs. Public RPCs).
 
 #### 3. Third-Party Integration Telemetry
 
@@ -146,11 +146,11 @@ Centralized search and audit viewer across every transaction processed on the Se
   - Itemized product line items with unit prices and totals.
   - Payment method (Cash, Bank Transfer, POS/Card, Credit) and settlement history for credit sales.
   - Permanent actor snapshots: `{ issuedBy, settledBy, voidedBy }`.
-  - Cryptographic verification seal and Electroneum block explorer link.
+  - Cryptographic verification seal and Avalanche C-Chain block explorer link (Snowtrace).
 
 #### 2. Universal Package & Dispatch Registry (`/records/shipments`)
 
-- Search by Package Code (`PKG-XXXXXX`), tracking code, or shipper address.
+- Search by Package Code (`SHPT-XXXXXXXXXXXX`), tracking code, or shipper address.
 - **Custody Timeline Viewer**:
   - Full state progression: `Created` &rarr; `InTransit` &rarr; `Delivered` &rarr; `Verified` / `Disputed`.
   - Operator stamps, timestamps, and on-chain transaction hashes for each event.
@@ -208,7 +208,7 @@ Admin access is strictly gated with multiple defensive layers:
 
 1. **Isolated Authentication Flow**:
    - Admins authenticate via a dedicated email OTP or passkey flow completely separate from merchant passwordless authentication.
-   - Authorized admin emails must exist in the environment whitelist (`ADMIN_EMAILS="ops@SellerPadi.co,cto@SellerPadi.co"`).
+   - Authorized admin emails must exist in the environment whitelist (`ADMIN_EMAILS="ops@sellerpadi.com,cto@sellerpadi.com"`).
 2. **Stateless Encrypted Sessions**:
    - Generates an HTTP-only, secure, same-site `admin_session` cookie signed with `ADMIN_SESSION_SECRET` (strict 6-month lease life: 180 days = 15,552,000s).
 3. **Immutable Admin Audit Logging**:
