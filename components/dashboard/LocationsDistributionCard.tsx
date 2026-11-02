@@ -62,18 +62,18 @@ export function LocationsDistributionCard({
   return (
     <Card className="p-4 sm:p-5 flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2 truncate">
-            <Globe className="w-4 h-4 text-emerald-400 shrink-0" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+            <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="truncate">Locations &amp; Regional Reach</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5 truncate">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
             Verified merchant operating jurisdictions &amp; settlement channels.
           </p>
         </div>
 
-        <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono shrink-0 ml-2">
+        <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono shrink-0 ml-2">
           {globeMarkers.length} {globeMarkers.length === 1 ? "Active Hub" : "Active Hubs"}
         </span>
       </div>
@@ -151,44 +151,44 @@ export function LocationsDistributionCard({
                 return (
                   <div
                     key={c.code}
-                    className="p-2.5 rounded-lg bg-slate-950/40 border border-slate-800/60 hover:border-slate-700/80 transition-colors space-y-1.5"
+                    className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700/80 transition-colors space-y-1.5"
                   >
                     <div className="flex items-center justify-between text-xs gap-2 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 truncate">
                         {/* SVG Country Flag Badge */}
-                        <div className="w-5 h-3.5 rounded-[2px] overflow-hidden border border-slate-700/80 shrink-0 shadow-xs">
+                        <div className="w-5 h-3.5 rounded-[2px] overflow-hidden border border-slate-200 dark:border-slate-700/80 shrink-0 shadow-xs">
                           {Flag ? (
                             <Flag width="100%" height="100%" className="block object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-blue-950 text-[9px] font-mono font-bold text-blue-300 flex items-center justify-center">
+                            <div className="w-full h-full bg-blue-100 dark:bg-blue-950 text-[9px] font-mono font-bold text-blue-700 dark:text-blue-300 flex items-center justify-center">
                               {c.code}
                             </div>
                           )}
                         </div>
-                        <span className="font-medium text-white truncate">{c.name}</span>
+                        <span className="font-medium text-slate-900 dark:text-white truncate">{c.name}</span>
                       </div>
 
                       <div className="flex items-center gap-1.5 font-mono text-[11px] shrink-0">
-                        <span className="text-slate-200 font-semibold">{c.count}</span>
-                        <span className="text-slate-400 text-[10px]">{c.count === 1 ? "store" : "stores"}</span>
-                        <span className="text-emerald-400 font-medium">({c.percentage}%)</span>
+                        <span className="text-slate-800 dark:text-slate-200 font-semibold">{c.count}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[10px]">{c.count === 1 ? "store" : "stores"}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">({c.percentage}%)</span>
                       </div>
                     </div>
 
                     {/* Progress Track */}
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-emerald-500 rounded-full transition-all"
                         style={{ width: `${Math.max(6, c.percentage)}%` }}
                       />
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-0.5">
                       <span className="flex items-center gap-1 truncate">
-                        <CreditCard className="w-3 h-3 text-slate-500 shrink-0" />
+                        <CreditCard className="w-3 h-3 text-slate-400 shrink-0" />
                         <span>Settlement: {c.currency} Native</span>
                       </span>
-                      <span className="text-emerald-400 font-mono shrink-0">Direct Clearing</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono shrink-0">Direct Clearing</span>
                     </div>
                   </div>
                 );
@@ -217,12 +217,12 @@ export function LocationsDistributionCard({
       </div>
 
       {/* Footer */}
-      <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 mt-2">
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2">
         <span className="flex items-center gap-1 truncate">
-          <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+          <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
           <span className="truncate">Active Merchants: {totalMerchants}</span>
         </span>
-        <span className="text-slate-400 font-mono shrink-0">100% Verified Accounts</span>
+        <span className="text-slate-500 dark:text-slate-400 font-mono shrink-0">100% Verified Accounts</span>
       </div>
     </Card>
   );

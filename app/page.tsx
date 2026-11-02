@@ -151,7 +151,6 @@ export default function AdminDashboardPage() {
     queryKey: ["admin-metrics"],
     queryFn: fetchPlatformMetrics,
     staleTime: QUERY_TIMINGS.METRICS_STALE_MS,
-    refetchInterval: 15 * 1000,
     refetchOnWindowFocus: true,
   });
 
@@ -181,15 +180,15 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 px-1 sm:px-0">
       {/* Page Header & Global Responsive Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
             <span>Executive Pulse</span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono font-normal">
+            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-mono font-normal">
               {networkLabel}
             </span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Real-time platform metrics, blockchain relayer telemetry, and merchant operations.
           </p>
         </div>
@@ -199,7 +198,7 @@ export default function AdminDashboardPage() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -207,20 +206,20 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/records"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-400" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Ledger</span>
           </Link>
 
           <Link
             href="/incidents"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
-            <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
+            <AlertOctagon className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
             <span>Incidents</span>
             {(data?.incidents.activeCount || 0) > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-950 text-rose-400 text-[10px] font-mono border border-rose-800">
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-400 text-[10px] font-mono border border-rose-200 dark:border-rose-800">
                 {data?.incidents.activeCount}
               </span>
             )}
@@ -228,7 +227,7 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/infrastructure"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors shadow-2xs"
           >
             <Server className="w-3.5 h-3.5" />
             <span>Infra</span>
@@ -315,19 +314,19 @@ export default function AdminDashboardPage() {
         {/* Tile 1: Sales Receipts Summary */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-blue-950/70 border border-blue-800/60 text-blue-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
               <Receipt className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {data?.counts.issuedReceipts || 0} Sales Issued
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {(data?.counts.voidedReceipts || 0) === 0 ? "0 Voided items" : `${data?.counts.voidedReceipts} Voided records`}
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
             Active
           </span>
         </Card>
@@ -335,21 +334,21 @@ export default function AdminDashboardPage() {
         {/* Tile 2: Retail Inventory Telemetry */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Boxes className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {data?.inventory?.totalProducts || 0} Catalog SKUs
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {(data?.inventory?.lowStockCount || 0) === 0
                   ? "Stock levels healthy"
                   : `${data?.inventory?.lowStockCount} Low stock alerts`}
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
             Stock
           </span>
         </Card>
@@ -357,19 +356,19 @@ export default function AdminDashboardPage() {
         {/* Tile 3: Custody Handover */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-950/70 border border-indigo-800/60 text-indigo-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
               <Package className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {totalDispatches} Packages Handled
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {data?.custody.Disputed || 0} Flagged Discrepancy
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/50 shrink-0 ml-2">
             Logistics
           </span>
         </Card>
@@ -377,19 +376,19 @@ export default function AdminDashboardPage() {
         {/* Tile 4: Relayer Fuel Reserve */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Server className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white font-mono truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white font-mono truncate">
                 {parseFloat(data?.relayer.balanceAvax ?? data?.relayer.balanceEtn ?? "0").toFixed(4)} AVAX
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {data?.relayer.isLowBalance ? "Low fuel notice (< 0.5 AVAX)" : "Fuel reserve healthy"}
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
             {networkLabel}
           </span>
         </Card>
@@ -397,19 +396,19 @@ export default function AdminDashboardPage() {
         {/* Tile 5: System Signals & Quota */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-blue-400" />
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {(data?.incidents.activeCount || 0) === 0 ? "All Systems Green" : `${data?.incidents.activeCount} Active Signals`}
               </div>
-              <div className="text-[11px] text-slate-400 font-mono truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
                 {data?.relayer.unanchoredQueue || 0} Pending in flight
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/50 shrink-0 ml-2">
             Live SLA
           </span>
         </Card>

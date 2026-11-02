@@ -55,9 +55,9 @@ export function MetricSparklineCard({
   }, [isDropdownOpen]);
 
   const badgeClasses = {
-    positive: "bg-emerald-950/80 text-emerald-400 border-emerald-800/60",
-    neutral: "bg-slate-800 text-slate-300 border-slate-700",
-    danger: "bg-rose-950/80 text-rose-400 border-rose-800/60",
+    positive: "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60",
+    neutral: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+    danger: "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",
   }[badgeType];
 
   const hasData = sparklineData.length > 0;
@@ -80,15 +80,15 @@ export function MetricSparklineCard({
 
   return (
     <Card className="p-4 sm:p-5 flex flex-col justify-between relative">
-      <div className="flex items-center justify-between text-xs text-slate-400 mb-2 gap-2">
-        <span className="font-medium text-slate-300 truncate">{title}</span>
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2 gap-2">
+        <span className="font-medium text-slate-700 dark:text-slate-300 truncate">{title}</span>
         <div className="flex items-center gap-1.5 shrink-0">
           {currencyBreakdown && currencyBreakdown.length > 0 && (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1 text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-800/90 hover:bg-slate-750 text-blue-400 border border-slate-700 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-750 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                 title="View sales breakdown by currency"
               >
                 <Coins className="w-2.5 h-2.5" />
@@ -97,13 +97,13 @@ export function MetricSparklineCard({
               </button>
 
               {isDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-[11px] font-semibold text-slate-300">
+                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                     <span className="flex items-center gap-1.5">
-                      <Coins className="w-3.5 h-3.5 text-blue-400" />
+                      <Coins className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                       <span>Volume by Currency</span>
                     </span>
-                    <span className="font-mono text-slate-400 text-[10px]">
+                    <span className="font-mono text-slate-500 dark:text-slate-400 text-[10px]">
                       {currencyBreakdown.length} {currencyBreakdown.length === 1 ? "unit" : "units"}
                     </span>
                   </div>
@@ -112,19 +112,19 @@ export function MetricSparklineCard({
                     {currencyBreakdown.map((item) => (
                       <div
                         key={item.currency}
-                        className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 text-xs hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 text-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                       >
                         <div className="min-w-0 pr-2">
-                          <div className="font-mono font-bold text-white flex items-center gap-1.5">
+                          <div className="font-mono font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                             <span>{item.formatted}</span>
-                            <span className="text-[10px] font-normal text-slate-400">{item.currency}</span>
+                            <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">{item.currency}</span>
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                             {item.count} {item.count === 1 ? "receipt" : "receipts"}
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-mono text-xs font-semibold text-blue-400">
+                          <div className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">
                             ${item.usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                           <div className="text-[10px] text-slate-500 font-mono">
@@ -144,15 +144,15 @@ export function MetricSparklineCard({
 
       <div className="flex items-end justify-between gap-2 mt-1 min-w-0">
         <div className="min-w-0 flex-1">
-          <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight truncate">
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight truncate">
             {isLoading ? (
-              <span className="inline-block w-24 h-7 bg-slate-800 animate-pulse rounded" />
+              <span className="inline-block w-24 h-7 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
             ) : (
               value
             )}
           </div>
           {subValue && (
-            <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 truncate">
               {subValue}
             </div>
           )}
@@ -170,7 +170,7 @@ export function MetricSparklineCard({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className={hasData ? iconColor : "text-slate-800"}
+                  className={hasData ? iconColor : "text-slate-300 dark:text-slate-800"}
                 />
               </svg>
             )}
@@ -183,19 +183,19 @@ export function MetricSparklineCard({
                     return (
                       <div
                         key={idx}
-                        className="flex-1 max-w-3 rounded-xs bg-slate-800/80 transition-colors relative"
+                        className="flex-1 max-w-3 rounded-xs bg-slate-100 dark:bg-slate-800/80 transition-colors relative"
                         style={{ height: `${pct}%` }}
                       >
                         <div
                           className={`w-full h-full rounded-xs ${
-                            val > 0 ? "bg-emerald-500" : "bg-slate-700"
+                            val > 0 ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                           }`}
                         />
                       </div>
                     );
                   })
                 ) : (
-                  <div className="w-full h-1 bg-slate-800 rounded-full" />
+                  <div className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
                 )}
               </div>
             )}
@@ -204,7 +204,7 @@ export function MetricSparklineCard({
       </div>
 
       {badgeText && (
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-800/80 text-[11px] min-w-0">
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800/80 text-[11px] min-w-0">
           <span className={`px-2 py-0.5 rounded-full border text-[10px] font-medium inline-flex items-center gap-0.5 truncate ${badgeClasses}`}>
             {badgeType === "positive" && <ArrowUpRight className="w-2.5 h-2.5 shrink-0" />}
             <span className="truncate">{badgeText}</span>

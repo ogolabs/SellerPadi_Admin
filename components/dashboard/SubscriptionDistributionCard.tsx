@@ -61,32 +61,32 @@ export function SubscriptionDistributionCard({
 
   return (
     <Card className="p-5 flex flex-col justify-between">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Layers className="w-4 h-4 text-blue-400" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>SaaS Subscription Tier Distribution</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Store volume quotas across active merchant accounts.
           </p>
         </div>
 
-        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-medium">
+        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-medium">
           {totalMerchants} Total Stores
         </span>
       </div>
 
       {/* Segmented Tier Bar */}
       <div className="py-4 space-y-3">
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <span>Tier Adoption Share</span>
-          <span className="font-mono text-[11px] text-slate-300">
+          <span className="font-mono text-[11px] text-slate-600 dark:text-slate-300">
             {payingCount} Paid &bull; {freeCount} Free
           </span>
         </div>
 
-        <div className="w-full h-2.5 bg-slate-950 border border-slate-800 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+        <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-full overflow-hidden flex p-0.5 gap-0.5">
           {breakdown.map((tier) => {
             if (tier.percentage <= 0) return null;
             const style = TIER_COLORS[tier.id] || TIER_COLORS.free;
@@ -108,12 +108,12 @@ export function SubscriptionDistributionCard({
             return (
               <div
                 key={tier.id}
-                className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800/60"
+                className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/60"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${style.bar}`} />
                   <div className="min-w-0">
-                    <span className="text-white font-medium block truncate text-[11px]">
+                    <span className="text-slate-900 dark:text-white font-medium block truncate text-[11px]">
                       {tier.name}
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block">
@@ -123,7 +123,7 @@ export function SubscriptionDistributionCard({
                 </div>
 
                 <div className="text-right shrink-0 ml-2">
-                  <span className="text-white font-mono font-bold text-xs block">
+                  <span className="text-slate-900 dark:text-white font-mono font-bold text-xs block">
                     {isLoading ? "..." : tier.merchantCount}
                   </span>
                   <span className="text-[10px] text-slate-500 font-mono block">
@@ -136,9 +136,9 @@ export function SubscriptionDistributionCard({
         </div>
       </div>
 
-      <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
         <span>Standard monthly limits with universal overage overflow</span>
-        <span className="font-mono text-[10px] text-slate-400">5 Tiers</span>
+        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">5 Tiers</span>
       </div>
     </Card>
   );

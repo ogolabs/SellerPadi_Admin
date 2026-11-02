@@ -69,7 +69,6 @@ export default function InfrastructurePage() {
     queryKey: ["admin-infrastructure"],
     queryFn: fetchInfrastructureTelemetry,
     staleTime: QUERY_TIMINGS.INFRA_STALE_MS,
-    refetchInterval: 15000,
   });
 
   const reconcileMutation = useMutation({

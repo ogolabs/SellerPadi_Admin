@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import { AdminShell } from "@/components/AdminShell";
 import { QueryProvider } from "@/components/QueryProvider";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
   title: "SellerPadi Mission Control — Platform Operations & Telemetry",
@@ -25,16 +26,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("sellerpadi_theme")||localStorage.getItem("SellerPadi_theme");if(t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";}else{document.documentElement.classList.remove("dark");document.documentElement.style.colorScheme="light";}}catch(e){}})();`,
+          }}
+        />
+        <meta name="theme-color" content="#F8FAFC" />
+      </head>
+      <body className="bg-slate-50 dark:bg-[#0B1220] text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-600 selection:text-white transition-colors duration-150">
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
           id="google-gsi-client"
         />
-        <QueryProvider>
-          <AdminShell>{children}</AdminShell>
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            <AdminShell>{children}</AdminShell>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -118,7 +118,6 @@ export default function MerchantDetailPage() {
       return res.json();
     },
     staleTime: QUERY_TIMINGS.DETAIL_STALE_MS,
-    refetchInterval: 30 * 1000,
     refetchOnWindowFocus: true,
   });
 

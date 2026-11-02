@@ -86,7 +86,6 @@ export default function MerchantsPage() {
       return res.json();
     },
     staleTime: QUERY_TIMINGS.DIRECTORY_STALE_MS,
-    refetchInterval: 30 * 1000,
     refetchOnWindowFocus: true,
   });
 

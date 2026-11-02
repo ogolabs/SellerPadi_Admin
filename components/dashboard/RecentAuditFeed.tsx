@@ -22,30 +22,30 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
   const getStatusBadge = (status: string, type: "receipt" | "shipment") => {
     const s = (status || "").toLowerCase();
     if (s === "voided" || s === "disputed") {
-      return "bg-rose-950/80 text-rose-300 border-rose-800/60";
+      return "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60";
     }
     if (s === "verified" || s === "delivered") {
-      return "bg-emerald-950/80 text-emerald-300 border-emerald-800/60";
+      return "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60";
     }
     if (type === "receipt") {
-      return "bg-blue-950/80 text-blue-300 border-blue-800/60";
+      return "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60";
     }
-    return "bg-indigo-950/80 text-indigo-300 border-indigo-800/60";
+    return "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/60";
   };
 
   return (
     <Card className="p-4 sm:p-5 flex flex-col justify-between">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800 gap-2">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-white truncate">Live Platform Activity Feed</h2>
-          <p className="text-xs text-slate-400 mt-0.5 truncate">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white truncate">Live Platform Activity Feed</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
             Real-time audit stream of counter receipts, parcel dispatches, and ledger events.
           </p>
         </div>
 
         <Link
           href="/records"
-          className="text-xs text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-medium shrink-0"
+          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors inline-flex items-center gap-1 font-medium shrink-0"
         >
           <span>All Records</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -53,11 +53,11 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
       </div>
 
       {/* Events List */}
-      <div className="divide-y divide-slate-800/60 py-1">
+      <div className="divide-y divide-slate-200/60 dark:divide-slate-800/60 py-1">
         {isLoading ? (
           <div className="py-4 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 bg-slate-800 animate-pulse rounded" />
+              <div key={i} className="h-10 bg-slate-200 dark:bg-slate-800 animate-pulse rounded" />
             ))}
           </div>
         ) : events.length === 0 ? (
@@ -68,14 +68,14 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
           events.map((ev) => (
             <div
               key={ev.id}
-              className="py-2.5 flex items-center justify-between gap-2.5 hover:bg-slate-800/30 px-1 sm:px-2 rounded-lg transition-colors group min-w-0"
+              className="py-2.5 flex items-center justify-between gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-800/30 px-1 sm:px-2 rounded-lg transition-colors group min-w-0"
             >
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                 <div
                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
                     ev.recordType === "receipt"
-                      ? "bg-blue-950/70 border-blue-800/60 text-blue-400"
-                      : "bg-indigo-950/70 border-indigo-800/60 text-indigo-400"
+                      ? "bg-blue-50 dark:bg-blue-950/70 border-blue-200 dark:border-blue-800/60 text-blue-600 dark:text-blue-400"
+                      : "bg-indigo-50 dark:bg-indigo-950/70 border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400"
                   }`}
                 >
                   {ev.recordType === "receipt" ? (
@@ -87,7 +87,7 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs font-medium text-white truncate max-w-[130px] sm:max-w-none">
+                    <span className="text-xs font-medium text-slate-900 dark:text-white truncate max-w-[130px] sm:max-w-none">
                       {ev.merchantName || (ev.recordType === "receipt" ? "Receipt Store" : "Parcel Shipper")}
                     </span>
                     <span
@@ -99,9 +99,9 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
                       {ev.status}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                    <span className="font-mono text-slate-300 font-semibold">{ev.id}</span>
-                    <span className="mx-1.5 text-slate-600">&bull;</span>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                    <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">{ev.id}</span>
+                    <span className="mx-1.5 text-slate-400 dark:text-slate-600">&bull;</span>
                     <span className="truncate">{ev.detail}</span>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
                 </span>
                 <Link
                   href={`/records?q=${encodeURIComponent(ev.id)}`}
-                  className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                   title="Inspect Record"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -124,9 +124,9 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
         )}
       </div>
 
-      <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
         <span>Continuous Real-Time Ingestion</span>
-        <span className="text-slate-400 font-mono">MongoDB + Avalanche C-Chain</span>
+        <span className="text-slate-600 dark:text-slate-400 font-mono">MongoDB + Avalanche C-Chain</span>
       </div>
     </Card>
   );

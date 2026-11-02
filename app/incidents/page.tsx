@@ -70,7 +70,6 @@ export default function IncidentsPage() {
       return res.json();
     },
     staleTime: QUERY_TIMINGS.INCIDENTS_STALE_MS,
-    refetchInterval: 15 * 1000,
     refetchOnWindowFocus: true,
   });
 
