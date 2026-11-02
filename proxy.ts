@@ -7,10 +7,10 @@ export async function proxy(request: NextRequest) {
   // Allow static files, api auth routes, and login page
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon.ico") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/logo-") ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/api/auth/login") ||
-    pathname.startsWith("/api/auth/verify")
+    pathname.startsWith("/api/auth/")
   ) {
     return NextResponse.next();
   }

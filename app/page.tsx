@@ -12,12 +12,15 @@ import {
   Layers,
   RefreshCw,
   Package,
+  Boxes,
   ShieldCheck,
   Receipt,
   CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MetricSparklineCard } from "@/components/dashboard/MetricSparklineCard";
+import { MonetizationCard } from "@/components/dashboard/MonetizationCard";
+import { SubscriptionDistributionCard } from "@/components/dashboard/SubscriptionDistributionCard";
 import { ActivityVolumeChart } from "@/components/dashboard/ActivityVolumeChart";
 import { LocationsDistributionCard } from "@/components/dashboard/LocationsDistributionCard";
 import { RelayerQuotaCard } from "@/components/dashboard/RelayerQuotaCard";
@@ -55,10 +58,44 @@ interface MetricsResponse {
     voidedReceipts: number;
     merchants: number;
   };
+  mrr?: {
+    totalUsd: number;
+    formattedTotalUsd: string;
+    domesticNgn: number;
+    formattedDomesticNgn: string;
+    internationalUsd: number;
+    formattedInternationalUsd: string;
+    activePaidSubscribers: number;
+    conversionRatePercent: string;
+  };
+  overage?: {
+    totalNgn: number;
+    totalUsd: number;
+    formattedNgn: string;
+    formattedUsd: string;
+  };
+  plans?: {
+    breakdown: Array<{
+      id: "free" | "starter_500" | "growth_1000" | "business_2500" | "scale_5000";
+      name: string;
+      merchantCount: number;
+      percentage: number;
+      monthlyOpsQuota: number;
+      priceNgn: number;
+      priceUsd: number;
+    }>;
+    payingMerchants: number;
+    freeMerchants: number;
+  };
+  inventory?: {
+    totalProducts: number;
+    lowStockCount: number;
+  };
   relayer: {
     address: string;
     isLowBalance: boolean;
-    balanceEtn: string;
+    balanceAvax?: string;
+    balanceEtn?: string;
     unanchoredQueue: number;
     network: "mainnet" | "testnet";
   };
@@ -103,17 +140,17 @@ interface MetricsResponse {
 async function fetchPlatformMetrics(): Promise<MetricsResponse> {
   const res = await fetch("/api/metrics");
   if (!res.ok) {
-    throw new Error("Failed to fetch platform metrics");
+    const errorBody = await res.json().catch(() => null);
+    throw new Error(errorBody?.error || `Failed to fetch platform metrics (${res.status})`);
   }
   return res.json();
 }
 
 export default function AdminDashboardPage() {
-  const { data, isLoading, isFetching, refetch } = useQuery<MetricsResponse>({
+  const { data, isLoading, isFetching, isError, error, refetch } = useQuery<MetricsResponse>({
     queryKey: ["admin-metrics"],
     queryFn: fetchPlatformMetrics,
     staleTime: QUERY_TIMINGS.METRICS_STALE_MS,
-    refetchInterval: 15 * 1000,
     refetchOnWindowFocus: true,
   });
 
@@ -131,7 +168,7 @@ export default function AdminDashboardPage() {
 
   const weeklyGmvUsd = data?.dailyActivity?.reduce((acc, d) => acc + (d.gmvUsd || 0), 0) || 0;
   const isMainnet = data?.relayer?.network === "mainnet";
-  const networkLabel = isMainnet ? "ETN Mainnet" : "ETN Testnet";
+  const networkLabel = isMainnet ? "AVAX Mainnet" : "Fuji Testnet";
 
   const currencyBreakdown = Object.values(data?.gmv.byCurrency || {})
     .filter((c) => c.total > 0)
@@ -143,15 +180,15 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 px-1 sm:px-0">
       {/* Page Header & Global Responsive Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
             <span>Executive Pulse</span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono font-normal">
+            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-mono font-normal">
               {networkLabel}
             </span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Real-time platform metrics, blockchain relayer telemetry, and merchant operations.
           </p>
         </div>
@@ -161,7 +198,7 @@ export default function AdminDashboardPage() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -169,20 +206,20 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/records"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-400" />
+            <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Ledger</span>
           </Link>
 
           <Link
             href="/incidents"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
-            <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
+            <AlertOctagon className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
             <span>Incidents</span>
             {(data?.incidents.activeCount || 0) > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-950 text-rose-400 text-[10px] font-mono border border-rose-800">
+              <span className="px-1.5 py-0.2 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-400 text-[10px] font-mono border border-rose-200 dark:border-rose-800">
                 {data?.incidents.activeCount}
               </span>
             )}
@@ -190,13 +227,28 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/infrastructure"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors shadow-2xs"
           >
             <Server className="w-3.5 h-3.5" />
             <span>Infra</span>
           </Link>
         </div>
       </div>
+
+      {isError && (
+        <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-200 text-xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <AlertOctagon className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{error instanceof Error ? error.message : "Failed to load live platform metrics."}</span>
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="px-2.5 py-1 rounded bg-rose-900/80 hover:bg-rose-800 text-white font-medium transition-colors shrink-0 cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Top 4 KPI Cards with Responsive Typography & Sparklines */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -257,87 +309,128 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      {/* Secondary KPI Strip: 4 Compact Telemetry Tiles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Secondary KPI Strip: Compact Telemetry Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Tile 1: Sales Receipts Summary */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-blue-950/70 border border-blue-800/60 text-blue-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
               <Receipt className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {data?.counts.issuedReceipts || 0} Sales Issued
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {(data?.counts.voidedReceipts || 0) === 0 ? "0 Voided items" : `${data?.counts.voidedReceipts} Voided records`}
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
             Active
           </span>
         </Card>
 
-        {/* Tile 2: Custody Handover */}
+        {/* Tile 2: Retail Inventory Telemetry */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-950/70 border border-indigo-800/60 text-indigo-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Boxes className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                {data?.inventory?.totalProducts || 0} Catalog SKUs
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {(data?.inventory?.lowStockCount || 0) === 0
+                  ? "Stock levels healthy"
+                  : `${data?.inventory?.lowStockCount} Low stock alerts`}
+              </div>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
+            Stock
+          </span>
+        </Card>
+
+        {/* Tile 3: Custody Handover */}
+        <Card className="p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
               <Package className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {totalDispatches} Packages Handled
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {data?.custody.Disputed || 0} Flagged Discrepancy
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/50 shrink-0 ml-2">
             Logistics
           </span>
         </Card>
 
-        {/* Tile 3: Relayer Fuel Reserve */}
+        {/* Tile 4: Relayer Fuel Reserve */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <Server className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white font-mono truncate">
-                {parseFloat(data?.relayer.balanceEtn || "0").toFixed(2)} ETN
+              <div className="text-xs font-semibold text-slate-900 dark:text-white font-mono truncate">
+                {parseFloat(data?.relayer.balanceAvax ?? data?.relayer.balanceEtn ?? "0").toFixed(4)} AVAX
               </div>
-              <div className="text-[11px] text-slate-400 truncate">
-                {data?.relayer.isLowBalance ? "Low fuel notice" : "Fuel reserve healthy"}
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {data?.relayer.isLowBalance ? "Low fuel notice (< 0.5 AVAX)" : "Fuel reserve healthy"}
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/50 shrink-0 ml-2">
             {networkLabel}
           </span>
         </Card>
 
-        {/* Tile 4: System Signals & Quota */}
+        {/* Tile 5: System Signals & Quota */}
         <Card className="p-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-blue-400" />
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                 {(data?.incidents.activeCount || 0) === 0 ? "All Systems Green" : `${data?.incidents.activeCount} Active Signals`}
               </div>
-              <div className="text-[11px] text-slate-400 font-mono truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
                 {data?.relayer.unanchoredQueue || 0} Pending in flight
               </div>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/50 shrink-0 ml-2">
+          <span className="text-[10px] font-mono text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800/50 shrink-0 ml-2">
             Live SLA
           </span>
         </Card>
+      </div>
+
+      {/* Platform Monetization & SaaS Plan Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+        <div className="lg:col-span-7">
+          <MonetizationCard
+            mrr={data?.mrr}
+            overage={data?.overage}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="lg:col-span-5">
+          <SubscriptionDistributionCard
+            plans={data?.plans}
+            totalMerchants={data?.counts.merchants}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* Middle Section: 7-Day Activity Summary (Left) & Locations (Right) */}
@@ -363,6 +456,7 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-6">
           <RelayerQuotaCard
             address={data?.relayer.address || ""}
+            balanceAvax={data?.relayer.balanceAvax}
             balanceEtn={data?.relayer.balanceEtn || "0"}
             unanchoredQueue={data?.relayer.unanchoredQueue || 0}
             isLowBalance={Boolean(data?.relayer.isLowBalance)}
@@ -400,7 +494,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="leading-relaxed">
-            Resit Institutional Ledger &bull; Electroneum SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
+            SellerPadi Institutional Ledger &bull; Avalanche C-Chain SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
           </span>
         </div>
         <div className="font-mono text-[11px] text-slate-500 shrink-0">

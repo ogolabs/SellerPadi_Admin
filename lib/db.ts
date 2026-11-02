@@ -2,9 +2,7 @@ import mongoose, { Schema, Model } from "mongoose";
 
 export function getMongoUri(): { uri: string; isTestnet: boolean } {
   const isNetTestnet = process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() !== "mainnet";
-  const uri = isNetTestnet
-    ? (process.env.MONGODB_URI_TESTNET || process.env.MONGODB_URI || "")
-    : (process.env.MONGODB_URI || "");
+  const uri = (process.env.MONGODB_URI || "").trim();
   return { uri, isTestnet: isNetTestnet };
 }
 
@@ -19,7 +17,7 @@ export async function connectAdminDb(): Promise<typeof mongoose> {
   const { uri } = getMongoUri();
 
   if (!uri) {
-    throw new Error("MONGODB_URI or MONGODB_URI_TESTNET environment variable is not defined");
+    throw new Error("MONGODB_URI environment variable is not defined");
   }
 
   const currentCache = globalThis.adminMongooseConnection || { conn: null, promise: null };
@@ -179,6 +177,10 @@ export interface IUserDoc {
   plan?: string;
   operatingMode?: "sales" | "dispatch" | "hybrid" | null;
   subscriptionActive?: boolean;
+  operationsThisMonth?: number;
+  rolloverQuota?: number;
+  overageCharges?: number;
+  billingCycle?: "monthly" | "yearly";
   isSuspended?: boolean;
   businessAddress?: string;
   isEmailVerified?: boolean;
@@ -205,6 +207,10 @@ const UserSchema = new Schema<IUserDoc>(
     plan: { type: String, default: "free" },
     operatingMode: { type: String, default: null },
     subscriptionActive: { type: Boolean, default: false },
+    operationsThisMonth: { type: Number, default: 0 },
+    rolloverQuota: { type: Number, default: 0 },
+    overageCharges: { type: Number, default: 0 },
+    billingCycle: { type: String, default: "monthly" },
     isSuspended: { type: Boolean, default: false },
     businessAddress: { type: String, default: null },
     isEmailVerified: { type: Boolean, default: false },
@@ -296,4 +302,72 @@ export const AdminBranch: Model<IBranchDoc> =
 
 export const AdminTeamMember: Model<ITeamMemberDoc> =
   mongoose.models.AdminTeamMember || mongoose.model<ITeamMemberDoc>("AdminTeamMember", TeamMemberSchema, "teammembers");
+
+export interface IInventoryProductDoc {
+  _id: string;
+  merchantAddress: string;
+  name: string;
+  sku?: string | null;
+  category?: string | null;
+  costPrice?: number | null;
+  sellingPrice: number;
+  trackStock: boolean;
+  totalStock: number;
+  lowStockAlert: number;
+  salesCount: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+const InventoryProductSchema = new Schema<IInventoryProductDoc>(
+  {
+    _id: { type: String, required: true },
+    merchantAddress: { type: String, required: true, lowercase: true, index: true },
+    name: { type: String, required: true },
+    sku: { type: String, default: null },
+    category: { type: String, default: null },
+    costPrice: { type: Number, default: null },
+    sellingPrice: { type: Number, required: true },
+    trackStock: { type: Boolean, default: true },
+    totalStock: { type: Number, default: 0 },
+    lowStockAlert: { type: Number, default: 5 },
+    salesCount: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true, index: true },
+  },
+  { timestamps: true, strict: false }
+);
+
+export const AdminInventoryProduct: Model<IInventoryProductDoc> =
+  mongoose.models.AdminInventoryProduct ||
+  mongoose.model<IInventoryProductDoc>("AdminInventoryProduct", InventoryProductSchema, "inventoryproducts");
+
+export interface IAdminAuditLogDoc {
+  _id: string;
+  adminEmail: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details?: Record<string, unknown> | null;
+  ipAddress?: string | null;
+  createdAt: Date;
+}
+
+const AdminAuditLogSchema = new Schema<IAdminAuditLogDoc>(
+  {
+    _id: { type: String, required: true },
+    adminEmail: { type: String, required: true, index: true },
+    action: { type: String, required: true, index: true },
+    targetType: { type: String, required: true, index: true },
+    targetId: { type: String, required: true, index: true },
+    details: { type: Schema.Types.Mixed, default: null },
+    ipAddress: { type: String, default: null },
+  },
+  { timestamps: { createdAt: true, updatedAt: false }, collection: "admin_audit_logs" }
+);
+
+export const AdminAuditLog: Model<IAdminAuditLogDoc> =
+  mongoose.models.AdminAuditLog ||
+  mongoose.model<IAdminAuditLogDoc>("AdminAuditLog", AdminAuditLogSchema, "admin_audit_logs");
+
 
