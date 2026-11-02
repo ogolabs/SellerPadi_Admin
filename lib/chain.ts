@@ -1,55 +1,34 @@
-import { createPublicClient, http, formatEther, defineChain, type Address } from "viem";
+import { createPublicClient, http, formatEther, type Address } from "viem";
+import { avalanche as avalancheMainnet, avalancheFuji } from "viem/chains";
 
-const ankrKey = process.env.ANKR_API_KEY ? `/${process.env.ANKR_API_KEY}` : "";
-
-export const electroneumMainnet = defineChain({
-  id: 52014,
-  name: "Electroneum",
-  nativeCurrency: { name: "Electroneum", symbol: "ETN", decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: [
-        "https://rpc.electroneum.com",
-        `https://rpc.ankr.com/electroneum${ankrKey}`,
-        "https://rpc.ankr.com/electroneum",
-      ],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Electroneum Explorer",
-      url: "https://blockexplorer.electroneum.com",
-    },
-  },
-});
-
-export const electroneumTestnet = defineChain({
-  id: 5201420,
-  name: "Electroneum Testnet",
-  nativeCurrency: { name: "Electroneum Testnet", symbol: "ETN", decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: [
-        `https://rpc.ankr.com/electroneum_testnet${ankrKey}`,
-        "https://rpc.ankr.com/electroneum_testnet",
-        "https://rpc.ankr.com/electroneum",
-      ],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: "Electroneum Testnet Explorer",
-      url: "https://testnet-blockexplorer.electroneum.com",
-    },
-  },
-});
+export { avalancheMainnet, avalancheFuji };
 
 export function isTestnet(): boolean {
   return process.env.NEXT_PUBLIC_NETWORK?.toLowerCase() !== "mainnet";
 }
 
+export const activeChain = isTestnet() ? avalancheFuji : avalancheMainnet;
+export const activeChainId = activeChain.id;
+export const blockExplorerUrl = activeChain.blockExplorers?.default?.url || (isTestnet() ? "https://testnet.snowtrace.io" : "https://snowtrace.io");
+
+export function getBlockExplorerTxUrl(txHash?: string | null): string {
+  if (!txHash || !isRealTxHash(txHash)) return blockExplorerUrl;
+  return `${blockExplorerUrl}/tx/${txHash}`;
+}
+
+export function getBlockExplorerAddressUrl(address?: string | null): string {
+  if (!address) return blockExplorerUrl;
+  return `${blockExplorerUrl}/address/${address}`;
+}
+
+export function isRealTxHash(hash?: string | null): hash is `0x${string}` {
+  if (!hash) return false;
+  if (hash.startsWith("0xsimulated_") || hash.startsWith("0xtest_")) return false;
+  return /^0x[a-fA-F0-9]{64}$/.test(hash);
+}
+
 export function getPublicClient() {
-  const chain = isTestnet() ? electroneumTestnet : electroneumMainnet;
+  const chain = isTestnet() ? avalancheFuji : avalancheMainnet;
   return createPublicClient({
     chain,
     transport: http(undefined, { timeout: 8000, retryCount: 3, retryDelay: 500 }),
@@ -58,7 +37,8 @@ export function getPublicClient() {
 
 export interface RelayerStatus {
   address: string;
-  balanceEtn: string;
+  balanceAvax: string;
+  balanceEtn?: string; // Backward compatibility alias
   balanceRaw: string;
   isCriticalBalance: boolean;
   isLowBalance: boolean;
@@ -66,6 +46,7 @@ export interface RelayerStatus {
   blockNumber: number;
   rpcLatencyMs: number;
   network: "mainnet" | "testnet";
+  explorerUrl: string;
 }
 
 export async function getRelayerStatus(): Promise<RelayerStatus> {
@@ -74,6 +55,7 @@ export async function getRelayerStatus(): Promise<RelayerStatus> {
 
   const client = getPublicClient();
   const startTime = Date.now();
+  const explorerUrl = blockExplorerUrl;
 
   try {
     const [balance, evmNonce, blockNumber] = await Promise.all([
@@ -83,14 +65,16 @@ export async function getRelayerStatus(): Promise<RelayerStatus> {
     ]);
 
     const rpcLatencyMs = Date.now() - startTime;
-    const balanceEtn = formatEther(balance);
-    const balanceNum = parseFloat(balanceEtn);
-    const isCriticalBalance = balanceNum < 10;
-    const isLowBalance = balanceNum < 50;
+    const balanceAvax = formatEther(balance);
+    const balanceNum = parseFloat(balanceAvax);
+    // Avalanche C-Chain gas reserves: < 0.1 AVAX is critical, < 0.5 AVAX is low reserve warning
+    const isCriticalBalance = balanceNum < 0.1;
+    const isLowBalance = balanceNum < 0.5;
 
     return {
       address: relayerAddress,
-      balanceEtn: balanceNum.toFixed(4),
+      balanceAvax: balanceNum.toFixed(4),
+      balanceEtn: balanceNum.toFixed(4), // backward compatibility
       balanceRaw: balance.toString(),
       isCriticalBalance,
       isLowBalance,
@@ -98,10 +82,12 @@ export async function getRelayerStatus(): Promise<RelayerStatus> {
       blockNumber: Number(blockNumber),
       rpcLatencyMs,
       network: isTestnet() ? "testnet" : "mainnet",
+      explorerUrl,
     };
   } catch {
     return {
       address: relayerAddress,
+      balanceAvax: "0.0000",
       balanceEtn: "0.0000",
       balanceRaw: "0",
       isCriticalBalance: true,
@@ -110,6 +96,7 @@ export async function getRelayerStatus(): Promise<RelayerStatus> {
       blockNumber: 0,
       rpcLatencyMs: Date.now() - startTime,
       network: isTestnet() ? "testnet" : "mainnet",
+      explorerUrl,
     };
   }
 }

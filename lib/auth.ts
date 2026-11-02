@@ -1,24 +1,59 @@
+import fs from "fs";
+import path from "path";
 import { SignJWT, jwtVerify } from "jose";
 
-export const ADMIN_COOKIE_NAME = "resit_admin_session";
+export const ADMIN_COOKIE_NAME = "SellerPadi_admin_session";
 export const ADMIN_SESSION_DURATION_SECONDS = 180 * 24 * 60 * 60; // 6 months (~180 days = 15,552,000 seconds)
 
 function getSecretKey(): Uint8Array {
-  const secret = process.env.ADMIN_SESSION_SECRET || "resit_admin_internal_secret_key_change_in_production_min_32_chars";
+  const secret = process.env.ADMIN_SESSION_SECRET || "SellerPadi_admin_internal_secret_key_change_in_production_min_32_chars";
   return new TextEncoder().encode(secret);
 }
 
 export function getAuthorizedAdminEmails(): string[] {
-  const raw = process.env.ADMIN_EMAILS || "adesholatajudeen1@gmail.com";
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter((e) => e.length > 0);
+  let raw = process.env.ADMIN_EMAILS || "";
+
+  // In non-production or if empty, also read from .env.local on disk to catch live edits without requiring server restart
+  if (process.env.NODE_ENV !== "production" || !raw) {
+    const candidatePaths = [
+      path.resolve(process.cwd(), ".env.local"),
+      path.resolve(process.cwd(), "admin", ".env.local"),
+      path.resolve(__dirname, "../../.env.local"),
+    ];
+
+    for (const p of candidatePaths) {
+      try {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, "utf8");
+          const match = content.match(/^ADMIN_EMAILS=(.+)$/m);
+          if (match && match[1]) {
+            const diskValue = match[1].trim();
+            raw = raw ? `${raw},${diskValue}` : diskValue;
+            break;
+          }
+        }
+      } catch {
+        // Skip disk read errors in restricted environments
+      }
+    }
+  }
+
+  if (!raw) {
+    raw = "adesholatajudeen1@gmail.com,support@sellerpadi.com";
+  }
+
+  // Parse, strip surrounding quotes, trim, lowercase
+  const emails = raw
+    .split(/[,;\n]/)
+    .map((e) => e.replace(/^["']|["']$/g, "").trim().toLowerCase())
+    .filter((e) => e.length > 0 && e.includes("@"));
+
+  return Array.from(new Set(emails));
 }
 
 export function isAuthorizedAdminEmail(email: string): boolean {
   if (!email || typeof email !== "string") return false;
-  const normalized = email.trim().toLowerCase();
+  const normalized = email.replace(/^["']|["']$/g, "").trim().toLowerCase();
   const authorized = getAuthorizedAdminEmails();
   return authorized.includes(normalized);
 }
@@ -90,4 +125,3 @@ export function verifyAdminOtp(email: string, code: string): boolean {
   otpStore.delete(normalized);
   return true;
 }
-

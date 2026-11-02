@@ -11,24 +11,83 @@ function getZeptoToken(): string {
   return token;
 }
 
+function parseZeptoMailError(status: number, rawBody: string): string {
+  try {
+    const parsed = JSON.parse(rawBody) as {
+      error?: {
+        code?: string;
+        message?: string;
+        details?: Array<{ code?: string; message?: string }>;
+      };
+    };
+
+    const details = parsed?.error?.details || [];
+    const detailCode = details[0]?.code;
+    const detailMsg = details[0]?.message;
+    const errorCode = parsed?.error?.code;
+    const mainMsg = parsed?.error?.message;
+
+    // Credit Exhaustion / Rate limit (TM_5001, LE_102, 429)
+    if (
+      status === 429 ||
+      errorCode === "TM_5001" ||
+      detailCode === "LE_102" ||
+      detailMsg?.toLowerCase().includes("credit exhausted") ||
+      mainMsg?.toLowerCase().includes("resource limit exhausted")
+    ) {
+      return "Email delivery limit reached: ZeptoMail credits are exhausted on this account. Please top up ZeptoMail credits or sign in with Google.";
+    }
+
+    // Invalid Token / Auth failure
+    if (status === 401 || errorCode === "TM_4001") {
+      return "ZeptoMail authentication failed: Invalid or expired API token. Please sign in with Google or verify ZEPTOMAIL_SEND_TOKEN.";
+    }
+
+    // Unverified Sender Domain
+    if (
+      detailMsg?.toLowerCase().includes("sender") ||
+      detailMsg?.toLowerCase().includes("unverified") ||
+      detailMsg?.toLowerCase().includes("domain")
+    ) {
+      return `Sender email address (${process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@sellerpadi.com"}) is not verified in ZeptoMail.`;
+    }
+
+    if (detailMsg) {
+      return `Email dispatch error: ${detailMsg}`;
+    }
+
+    if (mainMsg) {
+      return `Email dispatch error: ${mainMsg}`;
+    }
+  } catch {
+    // If response was not valid JSON, fall back to status code message
+  }
+
+  if (status === 429) {
+    return "Email delivery limit reached: ZeptoMail credits are exhausted. Please sign in with Google.";
+  }
+
+  return `Email dispatch failed (ZeptoMail HTTP ${status}). Please sign in with Google.`;
+}
+
 export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<void> {
   const token = getZeptoToken();
-  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || "support@userecover.xyz";
-  const fromName = process.env.ZEPTOMAIL_FROM_NAME || "Resit Mission Control";
+  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@sellerpadi.com";
+  const fromName = process.env.ZEPTOMAIL_FROM_NAME || "SellerPadi Mission Control";
 
   const htmlBody = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Resit Mission Control Access Code</title>
+  <title>SellerPadi Mission Control Access Code</title>
 </head>
 <body style="margin: 0; padding: 40px 20px; background-color: #090D16; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #F8FAFC;">
   <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 480px; background-color: #0F172A; border: 1px solid #1E293B; border-radius: 12px; padding: 32px;">
     <tr>
       <td style="padding-bottom: 24px; border-bottom: 1px solid #1E293B;">
         <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.02em;">
-          Resit Mission Control
+          SellerPadi Mission Control
         </h1>
         <p style="margin: 4px 0 0 0; font-size: 12px; color: #94A3B8;">
           Internal Platform Security Passcode
@@ -51,7 +110,7 @@ export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<
     <tr>
       <td style="padding-top: 24px; border-top: 1px solid #1E293B; text-align: center;">
         <p style="margin: 0; font-size: 11px; color: #64748B;">
-          Resit Infrastructure &bull; Electroneum Production Network
+          SellerPadi Infrastructure &bull; Avalanche C-Chain Network
         </p>
       </td>
     </tr>
@@ -70,13 +129,14 @@ export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<
     body: JSON.stringify({
       from: { address: fromEmail, name: fromName },
       to: [{ email_address: { address: toEmail, name: "Admin" } }],
-      subject: `Resit Admin Passcode: ${code}`,
+      subject: `SellerPadi Admin Passcode: ${code}`,
       htmlbody: htmlBody,
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`ZeptoMail failed with status ${response.status}: ${errorText}`);
+    const readableError = parseZeptoMailError(response.status, errorText);
+    throw new Error(readableError);
   }
 }

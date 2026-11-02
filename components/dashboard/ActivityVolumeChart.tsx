@@ -27,13 +27,13 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
 
   return (
     <Card className="p-4 sm:p-5 flex flex-col justify-between">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-400 shrink-0" />
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <span className="truncate">Activity &amp; Volume Summary</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5 truncate">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
             Daily throughput: sales receipts vs package dispatches.
           </p>
         </div>
@@ -41,11 +41,11 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
         <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs font-mono shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-xs bg-blue-500 shrink-0" />
-            <span className="text-slate-300">Receipts ({totalReceipts})</span>
+            <span className="text-slate-600 dark:text-slate-300">Receipts ({totalReceipts})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-xs bg-indigo-500 shrink-0" />
-            <span className="text-slate-300">Dispatches ({totalShipments})</span>
+            <span className="text-slate-600 dark:text-slate-300">Dispatches ({totalShipments})</span>
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
       <div className="pt-6 pb-2">
         {isLoading ? (
           <div className="h-52 sm:h-56 flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full border-2 border-slate-800 border-t-blue-500 animate-spin" />
+            <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-800 border-t-blue-500 animate-spin" />
           </div>
         ) : data.length === 0 ? (
           <div className="h-52 sm:h-56 flex items-center justify-center text-xs text-slate-500">
@@ -74,13 +74,13 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
                     className="flex-1 flex flex-col items-center justify-end h-full group relative min-w-0"
                   >
                     {/* Hover Tooltip */}
-                    <div className="absolute -top-12 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950 border border-slate-800 rounded-lg p-2 shadow-xl text-[10px] sm:text-[11px] whitespace-nowrap space-y-0.5">
-                      <div className="font-semibold text-slate-200">{day.label}</div>
-                      <div className="text-blue-400 font-mono">
+                    <div className="absolute -top-12 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2 shadow-md text-[10px] sm:text-[11px] whitespace-nowrap space-y-0.5">
+                      <div className="font-semibold text-slate-900 dark:text-slate-200">{day.label}</div>
+                      <div className="text-blue-600 dark:text-blue-400 font-mono">
                         {day.receiptsCount} {day.receiptsCount === 1 ? "receipt" : "receipts"} ($
                         {day.gmvUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                       </div>
-                      <div className="text-indigo-400 font-mono">
+                      <div className="text-indigo-600 dark:text-indigo-400 font-mono">
                         {day.shipmentsCount} {day.shipmentsCount === 1 ? "dispatch" : "dispatches"}
                       </div>
                     </div>
@@ -106,7 +106,7 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
             </div>
 
             {/* X-Axis Date Labels */}
-            <div className="flex items-center justify-between gap-1.5 sm:gap-4 md:gap-6 px-1 sm:px-2 pt-3 border-t border-slate-800 text-[10px] sm:text-[11px] text-slate-400 font-mono">
+            <div className="flex items-center justify-between gap-1.5 sm:gap-4 md:gap-6 px-1 sm:px-2 pt-3 border-t border-slate-200 dark:border-slate-800 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-mono">
               {data.map((day) => (
                 <div key={day.date} className="flex-1 text-center truncate">
                   {day.label}
@@ -117,9 +117,9 @@ export function ActivityVolumeChart({ data = [], isLoading = false }: ActivityVo
         )}
       </div>
 
-      <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-400">
+      <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
         <span>Continuous Real-Time Telemetry</span>
-        <span className="font-mono text-emerald-400">Database Grounded</span>
+        <span className="font-mono text-emerald-600 dark:text-emerald-400">Database Grounded</span>
       </div>
     </Card>
   );

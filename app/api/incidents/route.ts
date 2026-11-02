@@ -28,28 +28,29 @@ export async function GET() {
 
     // 1. Relayer Health Evaluation
     const relayer = await getRelayerStatus();
-    const balanceNum = parseFloat(relayer.balanceEtn);
+    const balanceAvax = relayer.balanceAvax || relayer.balanceEtn || "0";
+    const balanceNum = parseFloat(balanceAvax);
 
     const incidents: IncidentItem[] = [];
 
-    if (balanceNum < 10) {
+    if (balanceNum < 0.1) {
       incidents.push({
         id: "inc-relayer-gas-critical",
         category: "relayer",
         severity: "critical",
         title: "Relayer Low Gas Exhaustion",
-        description: `Relayer wallet (${relayer.address.slice(0, 8)}...) balance is critically low at ${relayer.balanceEtn} ETN (< 10 ETN). Immediate risk of transaction reverts!`,
+        description: `Relayer wallet (${relayer.address.slice(0, 8)}...) balance is critically low at ${balanceAvax} AVAX (< 0.10 AVAX). Immediate risk of transaction reverts!`,
         entityId: relayer.address,
         createdAt: new Date(),
         canRetry: false,
       });
-    } else if (balanceNum < 50) {
+    } else if (balanceNum < 0.5) {
       incidents.push({
         id: "inc-relayer-gas-warning",
         category: "relayer",
         severity: "warning",
         title: "Relayer Gas Depletion Warning",
-        description: `Relayer balance is ${relayer.balanceEtn} ETN (< 50 ETN). Fuel top-up advised to prevent queuing stalls.`,
+        description: `Relayer balance is ${balanceAvax} AVAX (< 0.50 AVAX). Fuel top-up advised to prevent queuing stalls.`,
         entityId: relayer.address,
         createdAt: new Date(),
         canRetry: false,
@@ -61,7 +62,7 @@ export async function GET() {
         id: "inc-relayer-rpc-latency",
         category: "relayer",
         severity: "warning",
-        title: "Electroneum RPC Degradation",
+        title: "Avalanche C-Chain RPC Degradation",
         description: `Node latency is ${relayer.rpcLatencyMs}ms, exceeding the 3,000ms SLA target.`,
         createdAt: new Date(),
         canRetry: false,
@@ -215,15 +216,15 @@ export async function GET() {
         stalledReceipts: stalledReceipts.length,
         stalledShipments: stalledShipments.length,
         disputedShipments: disputedShipments.length,
-        relayerGas: relayer.balanceEtn,
+        relayerGas: balanceAvax,
         relayerStatus:
-          balanceNum < 10
-            ? "Critical Fuel (<10 ETN)"
-            : balanceNum < 50
-            ? "Low Fuel (<50 ETN)"
-            : balanceNum >= 100
-            ? "Healthy (>=100 ETN)"
-            : "Moderate (>=50 ETN)",
+          balanceNum < 0.1
+            ? "Critical Fuel (<0.10 AVAX)"
+            : balanceNum < 0.5
+            ? "Low Fuel (<0.50 AVAX)"
+            : balanceNum >= 1.0
+            ? "Healthy (>=1.0 AVAX)"
+            : "Moderate (>=0.50 AVAX)",
       },
     });
   } catch (error) {

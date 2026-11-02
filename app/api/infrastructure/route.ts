@@ -8,6 +8,7 @@ import {
   getUnanchoredShipmentFilter,
   healDriftedAnchors,
 } from "@/lib/ledger-queries";
+import { collectThirdPartyTelemetry } from "@/lib/integrations-telemetry";
 
 export async function GET() {
   const startTime = Date.now();
@@ -23,7 +24,7 @@ export async function GET() {
     }
     const dbPingMs = Date.now() - dbPingStart;
 
-    // Run database count queries and blockchain queries concurrently
+    // Run database count queries, blockchain queries, and third-party API probes concurrently
     const [
       receiptsCount,
       pendingReceipts,
@@ -34,6 +35,7 @@ export async function GET() {
       merchantsCount,
       usersCount,
       relayer,
+      integrations,
     ] = await Promise.all([
       AdminReceipt.countDocuments(),
       AdminReceipt.countDocuments(getPendingQueueReceiptFilter()),
@@ -44,6 +46,7 @@ export async function GET() {
       AdminUser.countDocuments({ role: "merchant" }),
       AdminUser.countDocuments(),
       getRelayerStatus(),
+      collectThirdPartyTelemetry(),
     ]);
 
     const mem = process.memoryUsage();
@@ -79,6 +82,7 @@ export async function GET() {
         },
       },
       relayer,
+      integrations,
       runtime: {
         nodeVersion: process.version,
         memoryHeapUsedMb: (mem.heapUsed / 1024 / 1024).toFixed(2),
