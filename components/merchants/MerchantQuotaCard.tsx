@@ -129,7 +129,7 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
           >
             {formatMoney(quota.accruedOverageCharge, currency)}
             <span className="text-[10px] font-normal text-slate-500 ml-1">
-              ({quota.isDomestic ? "₦1" : "$0.003"}/op)
+              ({quota.isDomestic ? "₦10" : "$0.003"}/op)
             </span>
           </span>
         </div>
