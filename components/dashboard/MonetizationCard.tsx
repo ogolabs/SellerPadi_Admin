@@ -112,7 +112,7 @@ export function MonetizationCard({
           <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Universal Overage Guarantee Active</span>
         </div>
-        <span className="text-slate-500 font-mono text-[10px]">Flat ₦1/op &bull; $0.003/op</span>
+        <span className="text-slate-500 font-mono text-[10px]">Flat ₦10/op &bull; $0.003/op</span>
       </div>
     </Card>
   );
