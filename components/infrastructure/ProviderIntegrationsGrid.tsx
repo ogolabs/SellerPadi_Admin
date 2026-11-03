@@ -127,10 +127,12 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
           </div>
           <div
             className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400 truncate"
-            title={integrations?.zeptoMail.creditExhaustedNotice}
+            title={integrations?.zeptoMail.creditExhaustedNotice || integrations?.zeptoMail.error}
           >
             {integrations?.zeptoMail.status === "credit_exhausted"
-              ? "LE_102 credit limit reached"
+              ? integrations?.zeptoMail.creditExhaustedNotice || "Credit limit reached"
+              : integrations?.zeptoMail.status === "error"
+              ? integrations?.zeptoMail.error || "Delivery error"
               : "Ready for transactions"}
           </div>
         </div>
@@ -218,41 +220,41 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
 
             <div className="space-y-2 pt-1 text-xs">
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Verified Merchants</span>
+                <span className="text-slate-500 dark:text-slate-400">Checks (Month)</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
+                  {integrations?.diditKyc.monthlyChecksUsed ?? 0} / {integrations?.diditKyc.monthlyCheckLimit ?? 500} used
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">Remaining</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">
-                  {integrations?.diditKyc.verifiedMerchants ?? 0}
+                  {integrations?.diditKyc.monthlyChecksRemaining ?? 500} left
                 </span>
               </div>
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Pending Review</span>
+                <span className="text-slate-500 dark:text-slate-400">Verified / Pending</span>
                 <span className="text-slate-900 dark:text-slate-200 font-mono">
-                  {integrations?.diditKyc.pendingMerchants ?? 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
-                <span className="text-slate-500 dark:text-slate-400">Workflow</span>
-                <span
-                  className="text-slate-900 dark:text-slate-200 font-mono truncate max-w-30"
-                  title={integrations?.diditKyc.workflowLabel}
-                >
-                  {integrations?.diditKyc.workflowLabel || integrations?.diditKyc.workflowIdMasked || "—"}
+                  {integrations?.diditKyc.verifiedMerchants ?? 0} / {integrations?.diditKyc.pendingMerchants ?? 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400">Latency</span>
+                <span className="text-slate-500 dark:text-slate-400">Unit Rate</span>
                 <span className="text-slate-900 dark:text-slate-200 font-mono">
-                  {integrations?.diditKyc.latencyMs !== undefined
-                    ? `${integrations.diditKyc.latencyMs} ms`
-                    : "—"}
+                  {integrations?.diditKyc.unitCost || "$0.73 USD"}
                 </span>
               </div>
             </div>
           </div>
           <div
-            className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400 truncate"
+            className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between"
             title={integrations?.diditKyc.features || integrations?.diditKyc.detail}
           >
-            Status: {integrations?.diditKyc.workflowStatus ? `${integrations.diditKyc.workflowStatus} (Active)` : "Connected"}
+            <span className="truncate">
+              Status: {integrations?.diditKyc.workflowStatus ? `${integrations.diditKyc.workflowStatus} (Active)` : "Connected"}
+            </span>
+            <span className="font-mono text-slate-400 dark:text-slate-500">
+              Bal: {integrations?.diditKyc.balance || "$0.00"}
+            </span>
           </div>
         </div>
       </div>
