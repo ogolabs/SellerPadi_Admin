@@ -1,5 +1,37 @@
 const ZEPTO_API_URL = "https://api.zeptomail.com/v1.1/email";
 
+export interface ZeptoMailDispatchState {
+  lastDispatchedAt?: string;
+  lastFailedAt?: string;
+  lastError?: string;
+  isCreditExhausted?: boolean;
+}
+
+declare global {
+  var __zeptoMailTelemetryState: ZeptoMailDispatchState | undefined;
+}
+
+export function getZeptoMailDispatchState(): ZeptoMailDispatchState {
+  if (!globalThis.__zeptoMailTelemetryState) {
+    globalThis.__zeptoMailTelemetryState = {};
+  }
+  return globalThis.__zeptoMailTelemetryState;
+}
+
+export function recordZeptoMailSuccess(): void {
+  const state = getZeptoMailDispatchState();
+  state.lastDispatchedAt = new Date().toISOString();
+  state.lastError = undefined;
+  state.isCreditExhausted = false;
+}
+
+export function recordZeptoMailFailure(errorMsg: string, isCreditExhausted: boolean): void {
+  const state = getZeptoMailDispatchState();
+  state.lastFailedAt = new Date().toISOString();
+  state.lastError = errorMsg;
+  state.isCreditExhausted = isCreditExhausted;
+}
+
 function getZeptoToken(): string {
   const rawToken = process.env.ZEPTOMAIL_SEND_TOKEN || "";
   let token = rawToken.trim();
@@ -49,7 +81,7 @@ function parseZeptoMailError(status: number, rawBody: string): string {
       detailMsg?.toLowerCase().includes("unverified") ||
       detailMsg?.toLowerCase().includes("domain")
     ) {
-      return `Sender email address (${process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@sellerpadi.com"}) is not verified in ZeptoMail.`;
+      return `Sender email address (${process.env.ZEPTOMAIL_FROM_EMAIL || "no-reply@sellerpadi.com"}) is not verified in ZeptoMail.`;
     }
 
     if (detailMsg) {
@@ -72,7 +104,7 @@ function parseZeptoMailError(status: number, rawBody: string): string {
 
 export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<void> {
   const token = getZeptoToken();
-  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || "noreply@sellerpadi.com";
+  const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || "no-reply@sellerpadi.com";
   const fromName = process.env.ZEPTOMAIL_FROM_NAME || "SellerPadi Mission Control";
 
   const htmlBody = `
@@ -119,24 +151,45 @@ export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<
 </html>
   `.trim();
 
-  const response = await fetch(ZEPTO_API_URL, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: token,
-    },
-    body: JSON.stringify({
-      from: { address: fromEmail, name: fromName },
-      to: [{ email_address: { address: toEmail, name: "Admin" } }],
-      subject: `SellerPadi Admin Passcode: ${code}`,
-      htmlbody: htmlBody,
-    }),
-  });
+  try {
+    const response = await fetch(ZEPTO_API_URL, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: token,
+      },
+      body: JSON.stringify({
+        from: { address: fromEmail, name: fromName },
+        to: [{ email_address: { address: toEmail, name: "Admin" } }],
+        subject: `SellerPadi Admin Passcode: ${code}`,
+        htmlbody: htmlBody,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    const readableError = parseZeptoMailError(response.status, errorText);
-    throw new Error(readableError);
+    if (!response.ok) {
+      const errorText = await response.text();
+      const readableError = parseZeptoMailError(response.status, errorText);
+      const isCreditExhausted =
+        response.status === 429 ||
+        errorText.includes("TM_5001") ||
+        errorText.includes("LE_102") ||
+        errorText.toLowerCase().includes("credit exhausted") ||
+        errorText.toLowerCase().includes("resource limit exhausted");
+
+      recordZeptoMailFailure(readableError, isCreditExhausted);
+      throw new Error(readableError);
+    }
+
+    recordZeptoMailSuccess();
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message) {
+      // If error was already parsed and recorded above, it will match.
+      const state = getZeptoMailDispatchState();
+      if (!state.lastError) {
+        recordZeptoMailFailure(err.message, false);
+      }
+    }
+    throw err;
   }
 }

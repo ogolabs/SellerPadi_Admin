@@ -1,4 +1,5 @@
 import { AdminUser } from "@/lib/db";
+import { getZeptoMailDispatchState } from "@/lib/email";
 
 export interface TermiiTelemetry {
   status: "operational" | "low_balance" | "unconfigured" | "error";
@@ -17,6 +18,8 @@ export interface ZeptoMailTelemetry {
   isTokenConfigured: boolean;
   creditExhaustedNotice?: string;
   error?: string;
+  lastDispatchedAt?: string;
+  lastFailedAt?: string;
 }
 
 export interface GoogleIdentityTelemetry {
@@ -35,6 +38,10 @@ export interface DiditKycTelemetry {
   workflowStatus?: string;
   features?: string;
   balance?: string;
+  unitCost?: string;
+  monthlyChecksUsed: number;
+  monthlyCheckLimit: number;
+  monthlyChecksRemaining: number;
   verifiedMerchants: number;
   pendingMerchants: number;
   declinedMerchants: number;
@@ -127,7 +134,7 @@ export async function checkTermiiStatus(): Promise<TermiiTelemetry> {
  */
 export function checkZeptoMailStatus(): ZeptoMailTelemetry {
   const token = process.env.ZEPTOMAIL_SEND_TOKEN?.trim() || "";
-  const senderEmail = process.env.ZEPTOMAIL_FROM_EMAIL?.trim() || "noreply@sellerpadi.com";
+  const senderEmail = process.env.ZEPTOMAIL_FROM_EMAIL?.trim() || "no-reply@sellerpadi.com";
   const senderName = process.env.ZEPTOMAIL_FROM_NAME?.trim() || "SellerPadi Mission Control";
 
   if (!token) {
@@ -140,13 +147,38 @@ export function checkZeptoMailStatus(): ZeptoMailTelemetry {
     };
   }
 
-  // ZeptoMail currently has exhausted trial credits on the shared Zoho API domain
+  const dispatchState = getZeptoMailDispatchState();
+
+  if (dispatchState.isCreditExhausted) {
+    return {
+      status: "credit_exhausted",
+      senderEmail,
+      senderName,
+      isTokenConfigured: true,
+      creditExhaustedNotice:
+        dispatchState.lastError ||
+        "Email delivery credits exhausted (LE_102 / 429). Google Sign-In is active as primary authentication gate.",
+      lastFailedAt: dispatchState.lastFailedAt,
+    };
+  }
+
+  if (dispatchState.lastError) {
+    return {
+      status: "error",
+      senderEmail,
+      senderName,
+      isTokenConfigured: true,
+      error: dispatchState.lastError,
+      lastFailedAt: dispatchState.lastFailedAt,
+    };
+  }
+
   return {
-    status: "credit_exhausted",
+    status: "operational",
     senderEmail,
     senderName,
     isTokenConfigured: true,
-    creditExhaustedNotice: "Email delivery credits exhausted (LE_102 / 429). Google Sign-In is active as primary authentication gate.",
+    lastDispatchedAt: dispatchState.lastDispatchedAt,
   };
 }
 
@@ -222,23 +254,51 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
   const workflowIdMasked =
     workflowId.length > 12 ? `${workflowId.slice(0, 8)}...${workflowId.slice(-4)}` : workflowId || "unconfigured";
 
-  // Database verification metrics
-  const [verifiedCount, pendingCount, declinedCount, totalMerchants] = await Promise.all([
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Database verification metrics & current calendar month check usage
+  const [
+    verifiedCount,
+    pendingCount,
+    declinedCount,
+    totalMerchants,
+    monthlyChecksUsedDb,
+  ] = await Promise.all([
     AdminUser.countDocuments({ "verification.status": "verified" }),
     AdminUser.countDocuments({ "verification.status": "pending" }),
     AdminUser.countDocuments({ "verification.status": "rejected" }),
     AdminUser.countDocuments({
       $or: [{ role: "merchant" }, { hasMerchantProfile: true }, { companyName: { $exists: true, $ne: null } }],
     }),
+    AdminUser.countDocuments({
+      "verification.provider": "didit",
+      $or: [
+        { "verification.verifiedAt": { $gte: startOfMonth } },
+        {
+          "verification.status": { $in: ["verified", "pending", "rejected"] },
+          updatedAt: { $gte: startOfMonth },
+        },
+      ],
+    }),
   ]);
 
   const totalSubmissions = verifiedCount + pendingCount + declinedCount;
   const unverifiedMerchants = Math.max(0, totalMerchants - verifiedCount);
 
+  // Configurable monthly check allowance (defaults to 500 on Didit developer free tier allowance)
+  const configuredLimit = parseInt(process.env.DIDIT_MONTHLY_CHECK_LIMIT || "", 10);
+  const monthlyCheckLimit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 500;
+  const monthlyChecksUsed = monthlyChecksUsedDb;
+  const monthlyChecksRemaining = Math.max(0, monthlyCheckLimit - monthlyChecksUsed);
+
   if (!apiKey || !workflowId) {
     return {
       status: "unconfigured",
       workflowIdMasked,
+      monthlyChecksUsed,
+      monthlyCheckLimit,
+      monthlyChecksRemaining,
       verifiedMerchants: verifiedCount,
       pendingMerchants: pendingCount,
       declinedMerchants: declinedCount,
@@ -274,6 +334,9 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
       return {
         status: "error",
         workflowIdMasked,
+        monthlyChecksUsed,
+        monthlyCheckLimit,
+        monthlyChecksRemaining,
         verifiedMerchants: verifiedCount,
         pendingMerchants: pendingCount,
         declinedMerchants: declinedCount,
@@ -288,6 +351,9 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
       return {
         status: "error",
         workflowIdMasked,
+        monthlyChecksUsed,
+        monthlyCheckLimit,
+        monthlyChecksRemaining,
         verifiedMerchants: verifiedCount,
         pendingMerchants: pendingCount,
         declinedMerchants: declinedCount,
@@ -318,6 +384,9 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
     const workflowLabel = workflowData.workflow_label || "Compliance workflow";
     const workflowStatus = workflowData.status || "published";
     const features = workflowData.features || "OCR + Face Match";
+    const totalPrice = typeof workflowData.total_price === "number" ? workflowData.total_price : null;
+    const currency = workflowData.price_currency || "USD";
+    const unitCost = totalPrice !== null ? `$${totalPrice.toFixed(2)} ${currency}` : "$0.73 USD";
 
     return {
       status: "operational",
@@ -326,6 +395,10 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
       workflowStatus,
       features,
       balance: balanceStr,
+      unitCost,
+      monthlyChecksUsed,
+      monthlyCheckLimit,
+      monthlyChecksRemaining,
       verifiedMerchants: verifiedCount,
       pendingMerchants: pendingCount,
       declinedMerchants: declinedCount,
@@ -339,6 +412,9 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
     return {
       status: "error",
       workflowIdMasked,
+      monthlyChecksUsed,
+      monthlyCheckLimit,
+      monthlyChecksRemaining,
       verifiedMerchants: verifiedCount,
       pendingMerchants: pendingCount,
       declinedMerchants: declinedCount,
