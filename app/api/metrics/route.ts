@@ -31,10 +31,10 @@ const TIER_PRICING: Record<
   { name: string; ngn: number; usd: number; quota: number }
 > = {
   free: { name: "Free Tier", ngn: 0, usd: 0, quota: 100 },
-  starter_500: { name: "Starter 500", ngn: 500, usd: 2.01, quota: 500 },
-  growth_1000: { name: "Growth 1,000", ngn: 1000, usd: 3.03, quota: 1000 },
-  business_2500: { name: "Business 2,500", ngn: 2500, usd: 6.07, quota: 2500 },
-  scale_5000: { name: "Scale 5,000", ngn: 5000, usd: 11.14, quota: 5000 },
+  starter_500: { name: "Starter 500", ngn: 1000, usd: 2.01, quota: 500 },
+  growth_1000: { name: "Growth 1,000", ngn: 2000, usd: 3.03, quota: 1000 },
+  business_2500: { name: "Business 2,500", ngn: 5000, usd: 6.07, quota: 2500 },
+  scale_5000: { name: "Scale 5,000", ngn: 10000, usd: 11.14, quota: 5000 },
 };
 
 let regionNames: Intl.DisplayNames | null = null;
