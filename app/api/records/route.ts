@@ -132,12 +132,19 @@ export async function GET(req: NextRequest) {
         const regex = new RegExp(q, "i");
         // Also match merchants by updated companyName or fullName
         const matchingUsers = await AdminUser.find({
-          $or: [{ companyName: regex }, { fullName: regex }],
+          $or: [{ companyName: regex }, { fullName: regex }, { displayName: regex }],
         })
-          .select("_id eoaAddress walletPublicAddress")
+          .select("_id eoaAddress walletPublicAddress cryptoIdentity")
           .lean();
         const userAddrs = matchingUsers
-          .flatMap((u) => [u._id, u.eoaAddress, u.walletPublicAddress])
+          .flatMap((u) => [
+            u._id,
+            u.eoaAddress,
+            u.walletPublicAddress,
+            u.cryptoIdentity?.mvpVirtualAddress,
+            u.cryptoIdentity?.turnkeyWalletAddress,
+            u.cryptoIdentity?.smartAccountAddress,
+          ])
           .filter(Boolean)
           .map((a) => (a as string).toLowerCase());
 
@@ -278,17 +285,23 @@ async function buildMerchantLookupMap(addresses: string[]): Promise<Map<string, 
     $or: [
       { _id: { $in: uniqueAddresses } },
       { eoaAddress: { $in: uniqueAddresses } },
+      { "cryptoIdentity.mvpVirtualAddress": { $in: uniqueAddresses } },
+      { "cryptoIdentity.turnkeyWalletAddress": { $in: uniqueAddresses } },
+      { "cryptoIdentity.smartAccountAddress": { $in: uniqueAddresses } },
       { walletPublicAddress: { $in: uniqueAddresses } },
     ],
   })
-    .select("_id eoaAddress walletPublicAddress companyName fullName")
+    .select("_id eoaAddress walletPublicAddress cryptoIdentity companyName fullName displayName")
     .lean();
 
   for (const u of users) {
-    const name = u.companyName || u.fullName;
+    const name = u.companyName || u.displayName || u.fullName;
     if (name) {
       if (u._id) lookupMap.set(u._id.toLowerCase(), name);
       if (u.eoaAddress) lookupMap.set(u.eoaAddress.toLowerCase(), name);
+      if (u.cryptoIdentity?.mvpVirtualAddress) lookupMap.set(u.cryptoIdentity.mvpVirtualAddress.toLowerCase(), name);
+      if (u.cryptoIdentity?.turnkeyWalletAddress) lookupMap.set(u.cryptoIdentity.turnkeyWalletAddress.toLowerCase(), name);
+      if (u.cryptoIdentity?.smartAccountAddress) lookupMap.set(u.cryptoIdentity.smartAccountAddress.toLowerCase(), name);
       if (u.walletPublicAddress) lookupMap.set(u.walletPublicAddress.toLowerCase(), name);
     }
   }

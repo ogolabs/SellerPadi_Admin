@@ -148,6 +148,29 @@ const ShipmentSchema = new Schema<IShipmentDoc>(
   { timestamps: true, strict: false }
 );
 
+export type AuthProviderType = "google" | "email_otp" | "phone";
+
+export interface IAuthenticator {
+  providerType: AuthProviderType;
+  providerKey: string;
+  linkedAt: Date;
+}
+
+export type AccountAbstractionStandard = "ERC-4337" | "EIP-7702" | null;
+
+export interface ICryptoIdentity {
+  /** Our current $0 MVP tracking address */
+  mvpVirtualAddress: string;
+  /** Turnkey Sub-Organization ID (AWS Nitro Enclave) */
+  turnkeySubOrgId?: string | null;
+  /** Turnkey EVM Address: serves as EOA Signer (4337) or Target Account (7702) */
+  turnkeyWalletAddress?: string | null;
+  /** Account Abstraction designation */
+  aaStandard?: AccountAbstractionStandard;
+  /** Required explicitly for ERC-4337 (where Smart Account address != Turnkey address) */
+  smartAccountAddress?: string | null;
+}
+
 export interface IMerchantVerification {
   status: "unverified" | "pending" | "verified" | "rejected";
   provider?: "didit" | string | null;
@@ -166,12 +189,15 @@ export interface IUserDoc {
   _id: string;
   eoaAddress?: string;
   walletPublicAddress?: string;
+  displayName?: string | null;
   fullName: string;
   companyName?: string;
   businessEmail?: string;
   businessPhone?: string;
   businessHandle?: string;
   role: "user" | "merchant";
+  authenticators?: IAuthenticator[];
+  cryptoIdentity?: ICryptoIdentity | null;
   country?: string;
   currency?: string;
   plan?: string;
@@ -190,11 +216,66 @@ export interface IUserDoc {
   createdAt: Date;
 }
 
+const AuthenticatorSchema = new Schema<IAuthenticator>(
+  {
+    providerType: {
+      type: String,
+      enum: ["google", "email_otp", "phone"],
+      required: true,
+    },
+    providerKey: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    linkedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
+const CryptoIdentitySchema = new Schema<ICryptoIdentity>(
+  {
+    mvpVirtualAddress: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+    turnkeySubOrgId: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    turnkeyWalletAddress: {
+      type: String,
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+    aaStandard: {
+      type: String,
+      enum: ["ERC-4337", "EIP-7702", null],
+      default: null,
+    },
+    smartAccountAddress: {
+      type: String,
+      default: null,
+      lowercase: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const UserSchema = new Schema<IUserDoc>(
   {
     _id: { type: String, required: true },
     eoaAddress: { type: String, default: null, lowercase: true, index: true },
     walletPublicAddress: { type: String, default: null, lowercase: true },
+    displayName: { type: String, default: null },
     fullName: { type: String, required: true },
     companyName: { type: String, default: null },
     businessEmail: { type: String, default: null },
@@ -202,6 +283,14 @@ const UserSchema = new Schema<IUserDoc>(
     businessHandle: { type: String, default: null },
     authProvider: { type: String, default: null },
     role: { type: String, default: "user", index: true },
+    authenticators: {
+      type: [AuthenticatorSchema],
+      default: [],
+    },
+    cryptoIdentity: {
+      type: CryptoIdentitySchema,
+      default: null,
+    },
     country: { type: String, default: null },
     currency: { type: String, default: null },
     plan: { type: String, default: "free" },
@@ -218,6 +307,26 @@ const UserSchema = new Schema<IUserDoc>(
     verification: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
+);
+
+UserSchema.index(
+  { "authenticators.providerType": 1, "authenticators.providerKey": 1 },
+  { sparse: true }
+);
+
+UserSchema.index(
+  { "cryptoIdentity.mvpVirtualAddress": 1 },
+  { sparse: true }
+);
+
+UserSchema.index(
+  { "cryptoIdentity.turnkeyWalletAddress": 1 },
+  { sparse: true }
+);
+
+UserSchema.index(
+  { "cryptoIdentity.smartAccountAddress": 1 },
+  { sparse: true }
 );
 
 export interface IBranchDoc {
