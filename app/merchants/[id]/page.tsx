@@ -392,18 +392,26 @@ export default function MerchantDetailPage() {
                 Linked Channels ({merchant.authenticators.length}/2)
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {merchant.authenticators.map((auth, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono"
-                    title={`Linked at ${new Date(auth.linkedAt).toLocaleString()}`}
-                  >
-                    <span className="font-sans font-semibold capitalize text-slate-900 dark:text-white">
-                      {auth.providerType.replace("_", " ")}:
+                {merchant.authenticators.map((auth, idx) => {
+                  const isEmail = auth.providerType === "google" || auth.providerType === "email_otp";
+                  const label = isEmail ? "Email (Google & OTP)" : "Phone (SMS OTP)";
+                  const tooltip = isEmail
+                    ? `${auth.providerKey} — Supports both Google Sign-In and Email OTP (Linked ${new Date(auth.linkedAt).toLocaleDateString()})`
+                    : `${auth.providerKey} — Phone OTP login (Linked ${new Date(auth.linkedAt).toLocaleDateString()})`;
+
+                  return (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono"
+                      title={tooltip}
+                    >
+                      <span className="font-sans font-semibold text-slate-900 dark:text-white">
+                        {label}:
+                      </span>
+                      <span>{auth.providerKey}</span>
                     </span>
-                    <span>{auth.providerKey}</span>
-                  </span>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
