@@ -34,11 +34,15 @@ export async function GET(
     const { id } = await params;
     const decodedId = decodeURIComponent(id).trim();
 
-    // Find user by _id or eoaAddress
+    // Find user by _id, eoaAddress, cryptoIdentity addresses, or legacy walletPublicAddress
     const user = await AdminUser.findOne({
       $or: [
         { _id: decodedId },
         { eoaAddress: decodedId.toLowerCase() },
+        { "cryptoIdentity.mvpVirtualAddress": decodedId.toLowerCase() },
+        { "cryptoIdentity.turnkeyWalletAddress": decodedId.toLowerCase() },
+        { "cryptoIdentity.smartAccountAddress": decodedId.toLowerCase() },
+        { walletPublicAddress: decodedId.toLowerCase() },
       ],
     }).lean();
 
@@ -150,15 +154,16 @@ export async function GET(
     const effectiveLimit = baseLimit + rolloverQuota;
     const overageCount = Math.max(0, currentMonthOps - effectiveLimit);
     const isDomestic = (user.currency || "NGN").toUpperCase() === "NGN" || (user.country || "NG").toUpperCase() === "NG";
-    const overageRate = isDomestic ? 1 : 0.003;
+    const overageRate = isDomestic ? 10 : 0.003;
     const accruedOverageCharge = user.overageCharges || (overageCount * overageRate);
 
     return NextResponse.json({
       merchant: {
         id: user._id,
         merchantAddress,
+        displayName: user.displayName || null,
         fullName: user.fullName,
-        companyName: user.companyName || user.fullName || "Unnamed Store",
+        companyName: user.companyName || user.displayName || user.fullName || "Unnamed Store",
         businessEmail: user.businessEmail,
         businessPhone: user.businessPhone,
         businessHandle: user.businessHandle,
@@ -172,6 +177,8 @@ export async function GET(
         isEmailVerified: Boolean(user.isEmailVerified),
         isPhoneVerified: Boolean(user.isPhoneVerified),
         authProvider: user.authProvider || null,
+        authenticators: user.authenticators || [],
+        cryptoIdentity: user.cryptoIdentity || null,
         verification: user.verification || null,
         createdAt: user.createdAt,
       },
@@ -297,6 +304,10 @@ export async function PATCH(
       $or: [
         { _id: decodedId },
         { eoaAddress: decodedId.toLowerCase() },
+        { "cryptoIdentity.mvpVirtualAddress": decodedId.toLowerCase() },
+        { "cryptoIdentity.turnkeyWalletAddress": decodedId.toLowerCase() },
+        { "cryptoIdentity.smartAccountAddress": decodedId.toLowerCase() },
+        { walletPublicAddress: decodedId.toLowerCase() },
       ],
     }).lean();
 

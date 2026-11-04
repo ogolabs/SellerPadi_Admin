@@ -38,6 +38,7 @@ export interface DiditKycTelemetry {
   workflowStatus?: string;
   features?: string;
   balance?: string;
+  monthlyCreditAllowance?: string;
   unitCost?: string;
   monthlyChecksUsed: number;
   monthlyCheckLimit: number;
@@ -286,16 +287,18 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
   const totalSubmissions = verifiedCount + pendingCount + declinedCount;
   const unverifiedMerchants = Math.max(0, totalMerchants - verifiedCount);
 
-  // Configurable monthly check allowance (defaults to 500 on Didit developer free tier allowance)
+  // Configurable monthly check allowance (defaults to 30 on Didit developer free tier, based on the $10/mo credit allowance at $0.33/check)
   const configuredLimit = parseInt(process.env.DIDIT_MONTHLY_CHECK_LIMIT || "", 10);
-  const monthlyCheckLimit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 500;
+  const monthlyCheckLimit = Number.isFinite(configuredLimit) && configuredLimit > 0 ? configuredLimit : 30;
   const monthlyChecksUsed = monthlyChecksUsedDb;
   const monthlyChecksRemaining = Math.max(0, monthlyCheckLimit - monthlyChecksUsed);
+  const creditAllowance = process.env.DIDIT_MONTHLY_CREDIT_ALLOWANCE?.trim() || "$10.00";
 
   if (!apiKey || !workflowId) {
     return {
       status: "unconfigured",
       workflowIdMasked,
+      monthlyCreditAllowance: creditAllowance,
       monthlyChecksUsed,
       monthlyCheckLimit,
       monthlyChecksRemaining,
@@ -383,10 +386,10 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
 
     const workflowLabel = workflowData.workflow_label || "Compliance workflow";
     const workflowStatus = workflowData.status || "published";
-    const features = workflowData.features || "OCR + Face Match";
+    const features = workflowData.features || "ID + Liveness + Face Match + IP/Device ($0.33/check)";
     const totalPrice = typeof workflowData.total_price === "number" ? workflowData.total_price : null;
     const currency = workflowData.price_currency || "USD";
-    const unitCost = totalPrice !== null ? `$${totalPrice.toFixed(2)} ${currency}` : "$0.73 USD";
+    const unitCost = totalPrice !== null ? `$${totalPrice.toFixed(2)} ${currency}` : "$0.33 USD";
 
     return {
       status: "operational",
@@ -395,6 +398,7 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
       workflowStatus,
       features,
       balance: balanceStr,
+      monthlyCreditAllowance: creditAllowance,
       unitCost,
       monthlyChecksUsed,
       monthlyCheckLimit,
