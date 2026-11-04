@@ -112,7 +112,7 @@ Provides deep operational diagnostics for the underlying databases, blockchain r
 - **Google Identity & Passwordless Gateways**:
   - Authentication completion rates across Google One-Tap/OAuth, Email OTP, and Phone OTP channels.
 - **Automated Identity Network (Didit v3)**:
-  - Session initialization success rate, KYC decision pass/reject ratios, average verification completion latency, and webhook delivery status.
+  - Session initialization success rate, KYC decision pass/reject ratios, average verification completion latency, webhook delivery status, live credit balance tracking, and monthly free tier allowance utilization ($10.00/mo credit, ~30 checks at $0.33/check under Nov 1, 2026 rules).
 
 ---
 

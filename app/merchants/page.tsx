@@ -24,6 +24,7 @@ import { formatMoney } from "@/lib/currency";
 interface MerchantItem {
   id: string;
   merchantAddress: string;
+  displayName?: string | null;
   fullName: string;
   companyName: string;
   businessEmail: string | null;
@@ -177,7 +178,7 @@ export default function MerchantsPage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by store name, email, wallet address (0x...)..."
+            placeholder="Search by store name, email, phone, wallet, or provider key..."
             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg pl-9 pr-24 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-hidden focus:border-blue-500 transition-colors"
           />
           <button
@@ -265,7 +266,14 @@ export default function MerchantsPage() {
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors"
                   >
                     <td className="py-3.5 px-4">
-                      <div className="font-medium text-slate-900 dark:text-white">{merchant.companyName}</div>
+                      <div className="font-medium text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{merchant.companyName}</span>
+                        {merchant.displayName && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-normal">
+                            {merchant.displayName}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
                         <span>{merchant.fullName}</span>
                         {merchant.businessEmail && (

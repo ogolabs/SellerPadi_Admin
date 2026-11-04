@@ -204,7 +204,7 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white">Didit v3 KYC</h3>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Merchant Identity</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Identity ($10/mo Free Credit)</span>
                 </div>
               </div>
               <span
@@ -222,13 +222,13 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-500 dark:text-slate-400">Checks (Month)</span>
                 <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
-                  {integrations?.diditKyc.monthlyChecksUsed ?? 0} / {integrations?.diditKyc.monthlyCheckLimit ?? 500} used
+                  {integrations?.diditKyc.monthlyChecksUsed ?? 0} / {integrations?.diditKyc.monthlyCheckLimit ?? 30} used
                 </span>
               </div>
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-500 dark:text-slate-400">Remaining</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-mono font-medium">
-                  {integrations?.diditKyc.monthlyChecksRemaining ?? 500} left
+                  {integrations?.diditKyc.monthlyChecksRemaining ?? 30} left (~$10/mo credit)
                 </span>
               </div>
               <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
@@ -240,14 +240,14 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 dark:text-slate-400">Unit Rate</span>
                 <span className="text-slate-900 dark:text-slate-200 font-mono">
-                  {integrations?.diditKyc.unitCost || "$0.73 USD"}
+                  {integrations?.diditKyc.unitCost || "$0.33 USD"}
                 </span>
               </div>
             </div>
           </div>
           <div
             className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between"
-            title={integrations?.diditKyc.features || integrations?.diditKyc.detail}
+            title={integrations?.diditKyc.features || integrations?.diditKyc.detail || "Didit Free Tier: $10/mo credit (~30 checks at $0.33/check)"}
           >
             <span className="truncate">
               Status: {integrations?.diditKyc.workflowStatus ? `${integrations.diditKyc.workflowStatus} (Active)` : "Connected"}

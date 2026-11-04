@@ -53,9 +53,15 @@ export async function GET(req: NextRequest) {
           $or: [
             { companyName: regex },
             { fullName: regex },
+            { displayName: regex },
             { businessEmail: regex },
+            { businessPhone: regex },
             { businessHandle: regex },
             { eoaAddress: regex },
+            { "cryptoIdentity.mvpVirtualAddress": regex },
+            { "cryptoIdentity.turnkeyWalletAddress": regex },
+            { "cryptoIdentity.smartAccountAddress": regex },
+            { "authenticators.providerKey": regex },
             { _id: regex },
           ],
         },
@@ -70,7 +76,7 @@ export async function GET(req: NextRequest) {
       AdminBranch.countDocuments(),
       AdminUser.find(baseFilter)
         .select(
-          "_id eoaAddress fullName companyName businessEmail businessPhone businessHandle country currency plan operatingMode subscriptionActive isSuspended isEmailVerified isPhoneVerified verification createdAt"
+          "_id eoaAddress displayName fullName companyName businessEmail businessPhone businessHandle country currency plan operatingMode subscriptionActive isSuspended isEmailVerified isPhoneVerified verification authenticators cryptoIdentity createdAt"
         )
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -139,11 +145,14 @@ export async function GET(req: NextRequest) {
       return {
         id: u._id,
         merchantAddress: addr,
+        displayName: u.displayName || null,
         fullName: u.fullName || "Unknown",
-        companyName: u.companyName || u.fullName || "Unnamed Store",
+        companyName: u.companyName || u.displayName || u.fullName || "Unnamed Store",
         businessEmail: u.businessEmail || null,
         businessPhone: u.businessPhone || null,
         businessHandle: u.businessHandle || null,
+        authenticators: u.authenticators || [],
+        cryptoIdentity: u.cryptoIdentity || null,
         country: u.country || "NG",
         currency: u.currency || "NGN",
         plan: u.plan || "free",

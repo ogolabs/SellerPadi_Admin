@@ -151,17 +151,23 @@ export async function GET() {
         $or: [
           { _id: { $in: shippersToLookup } },
           { eoaAddress: { $in: shippersToLookup } },
+          { "cryptoIdentity.mvpVirtualAddress": { $in: shippersToLookup } },
+          { "cryptoIdentity.turnkeyWalletAddress": { $in: shippersToLookup } },
+          { "cryptoIdentity.smartAccountAddress": { $in: shippersToLookup } },
           { walletPublicAddress: { $in: shippersToLookup } },
         ],
       })
-        .select("_id eoaAddress walletPublicAddress companyName fullName")
+        .select("_id eoaAddress walletPublicAddress cryptoIdentity companyName fullName displayName")
         .lean();
 
       for (const u of users) {
-        const name = u.companyName || u.fullName;
+        const name = u.companyName || u.displayName || u.fullName;
         if (name) {
           if (u._id) merchantLookup.set(u._id.toLowerCase(), name);
           if (u.eoaAddress) merchantLookup.set(u.eoaAddress.toLowerCase(), name);
+          if (u.cryptoIdentity?.mvpVirtualAddress) merchantLookup.set(u.cryptoIdentity.mvpVirtualAddress.toLowerCase(), name);
+          if (u.cryptoIdentity?.turnkeyWalletAddress) merchantLookup.set(u.cryptoIdentity.turnkeyWalletAddress.toLowerCase(), name);
+          if (u.cryptoIdentity?.smartAccountAddress) merchantLookup.set(u.cryptoIdentity.smartAccountAddress.toLowerCase(), name);
           if (u.walletPublicAddress) merchantLookup.set(u.walletPublicAddress.toLowerCase(), name);
         }
       }

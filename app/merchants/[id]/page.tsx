@@ -37,6 +37,7 @@ interface MerchantDetailResponse {
   merchant: {
     id: string;
     merchantAddress: string;
+    displayName?: string | null;
     fullName: string;
     companyName: string;
     businessEmail?: string;
@@ -52,6 +53,18 @@ interface MerchantDetailResponse {
     isEmailVerified?: boolean;
     isPhoneVerified?: boolean;
     authProvider?: string | null;
+    authenticators?: Array<{
+      providerType: "google" | "email_otp" | "phone";
+      providerKey: string;
+      linkedAt: string;
+    }>;
+    cryptoIdentity?: {
+      mvpVirtualAddress: string;
+      turnkeySubOrgId?: string | null;
+      turnkeyWalletAddress?: string | null;
+      aaStandard?: "ERC-4337" | "EIP-7702" | null;
+      smartAccountAddress?: string | null;
+    } | null;
     verification?: IMerchantVerification | null;
     createdAt: string;
   };
@@ -240,7 +253,7 @@ export default function MerchantDetailPage() {
             )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Owner: <span className="text-slate-800 dark:text-slate-200 font-medium">{merchant.fullName}</span> • Mode:{" "}
+            Owner: <span className="text-slate-800 dark:text-slate-200 font-medium">{merchant.fullName}{merchant.displayName ? ` (${merchant.displayName})` : ""}</span> • Mode:{" "}
             <span className="capitalize text-slate-800 dark:text-slate-200">{merchant.operatingMode}</span> • Plan:{" "}
             <span className="uppercase text-slate-800 dark:text-slate-200">{merchant.plan}</span>
           </p>
@@ -320,19 +333,47 @@ export default function MerchantDetailPage() {
 
       {/* Identity & Metadata Strip */}
       <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-xs grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider block">
-            Blockchain EOA Identifier
+            Crypto &amp; Smart Identity
           </span>
           <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-300 break-all">
             <Wallet className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{merchant.merchantAddress}</span>
+            <span title="Primary EOA Signer">{merchant.merchantAddress}</span>
           </div>
+          {merchant.cryptoIdentity && (
+            <div className="pt-1 border-t border-slate-100 dark:border-slate-800/80 space-y-1 text-[11px]">
+              {merchant.cryptoIdentity.turnkeySubOrgId && (
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Turnkey Sub-Org:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {merchant.cryptoIdentity.turnkeySubOrgId.slice(0, 10)}...
+                  </span>
+                </div>
+              )}
+              {merchant.cryptoIdentity.turnkeyWalletAddress && (
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Turnkey Wallet:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {merchant.cryptoIdentity.turnkeyWalletAddress.slice(0, 6)}...{merchant.cryptoIdentity.turnkeyWalletAddress.slice(-4)}
+                  </span>
+                </div>
+              )}
+              {merchant.cryptoIdentity.aaStandard && (
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>AA Designation:</span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
+                    {merchant.cryptoIdentity.aaStandard}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider block">
-            Contact &amp; Support
+            Contact &amp; Authenticators
           </span>
           <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
             <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -344,9 +385,39 @@ export default function MerchantDetailPage() {
               <span>{merchant.businessPhone}</span>
             </div>
           )}
+
+          {merchant.authenticators && merchant.authenticators.length > 0 && (
+            <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
+                Linked Channels ({merchant.authenticators.length}/2)
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {merchant.authenticators.map((auth, idx) => {
+                  const isEmail = auth.providerType === "google" || auth.providerType === "email_otp";
+                  const label = isEmail ? "Email (Google & OTP)" : "Phone (SMS OTP)";
+                  const tooltip = isEmail
+                    ? `${auth.providerKey} — Supports both Google Sign-In and Email OTP (Linked ${new Date(auth.linkedAt).toLocaleDateString()})`
+                    : `${auth.providerKey} — Phone OTP login (Linked ${new Date(auth.linkedAt).toLocaleDateString()})`;
+
+                  return (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono"
+                      title={tooltip}
+                    >
+                      <span className="font-sans font-semibold text-slate-900 dark:text-white">
+                        {label}:
+                      </span>
+                      <span>{auth.providerKey}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider block">
             Store Registration
           </span>
@@ -354,10 +425,13 @@ export default function MerchantDetailPage() {
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{new Date(merchant.createdAt).toLocaleDateString()}</span>
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Country: {merchant.country} • Currency: {merchant.currency}
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
+            <div>Country: <span className="font-medium text-slate-700 dark:text-slate-300">{merchant.country}</span> • Currency: <span className="font-medium text-slate-700 dark:text-slate-300">{merchant.currency}</span></div>
             {merchant.authProvider && (
-              <span> • Auth: <span className="capitalize text-slate-800 dark:text-slate-200">{merchant.authProvider}</span></span>
+              <div>Primary Auth: <span className="capitalize font-medium text-slate-800 dark:text-slate-200">{merchant.authProvider}</span></div>
+            )}
+            {merchant.displayName && (
+              <div>Display Name: <span className="font-medium text-slate-800 dark:text-slate-200">{merchant.displayName}</span></div>
             )}
           </div>
         </div>
