@@ -7,6 +7,18 @@ import { formatMoney } from "@/lib/currency";
 export interface MerchantQuotaData {
   plan: string;
   baseLimit: number;
+  monthlyPlanLimit?: number;
+  isYearly?: boolean;
+  billingInterval?: "monthly" | "yearly";
+  billingCycleStart?: string | null;
+  billingCycleEnd?: string | null;
+  queuedSubscription?: {
+    plan: string;
+    billingInterval: "monthly" | "yearly";
+    operationsLimit: number;
+    startsAt: string;
+    endsAt: string;
+  } | null;
   rolloverQuota: number;
   effectiveLimit: number;
   currentMonthOperations: number;
@@ -25,6 +37,7 @@ interface MerchantQuotaCardProps {
 }
 
 export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
+  const isYearly = quota.isYearly || quota.billingInterval === "yearly";
   const percentUsed =
     quota.effectiveLimit > 0
       ? Math.min(100, Math.round((quota.currentMonthOperations / quota.effectiveLimit) * 100))
@@ -32,9 +45,16 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
 
   const isOverLimit = quota.overageCount > 0;
 
+  const cycleStartFormatted = quota.billingCycleStart
+    ? new Date(quota.billingCycleStart).toLocaleDateString()
+    : null;
+  const cycleEndFormatted = quota.billingCycleEnd
+    ? new Date(quota.billingCycleEnd).toLocaleDateString()
+    : null;
+
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <Gauge className="w-5 h-5" />
@@ -44,14 +64,14 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
               SaaS Quota &amp; Operational Capacity
             </h3>
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              Current Billing Month (Receipts &amp; Dispatches)
+              {isYearly ? "Annual Pooled Quota" : "Current Monthly Quota"} (Receipts &amp; Dispatches)
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold uppercase bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
-            {quota.plan.toUpperCase()} TIER
+            {quota.plan.toUpperCase()} {isYearly ? "• YEARLY (5% OFF)" : "• MONTHLY"}
           </span>
           <span
             className={`px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
@@ -66,11 +86,11 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
       </div>
 
       {/* Progress Bar */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2">
         <div className="flex justify-between items-center text-xs">
           <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5 font-medium">
             <Zap className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Monthly Utilization</span>
+            <span>{isYearly ? "Annual Usage" : "Monthly Utilization"}</span>
           </span>
           <span className="font-mono text-slate-900 dark:text-slate-100 font-bold">
             {quota.currentMonthOperations.toLocaleString()} / {quota.effectiveLimit.toLocaleString()} ops ({percentUsed}%)
@@ -84,7 +104,7 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
                 ? "bg-rose-600 dark:bg-rose-500"
                 : percentUsed > 85
                 ? "bg-slate-600 dark:bg-slate-400"
-                : "bg-blue-600 dark:bg-blue-500"
+                : "bg-blue-600 dark:blue-500"
             }`}
             style={{ width: `${percentUsed}%` }}
           />
@@ -94,9 +114,11 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
       {/* Breakdown Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
         <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/60">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">Base Plan Allowance</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mb-1">
+            {isYearly ? "Annual Pooled Allowance" : "Base Plan Allowance"}
+          </span>
           <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
-            {quota.baseLimit.toLocaleString()} ops/mo
+            {quota.baseLimit.toLocaleString()} ops/{isYearly ? "yr" : "mo"}
           </span>
         </div>
 
@@ -110,7 +132,7 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
         <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-slate-800/60">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1">
             <TrendingUp className="w-3 h-3 text-slate-400" />
-            <span>Month Receipts / Dispatches</span>
+            <span>Issued / Dispatched</span>
           </span>
           <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
             {quota.monthReceiptsCount} / {quota.monthShipmentsCount}
@@ -135,14 +157,36 @@ export function MerchantQuotaCard({ quota, currency }: MerchantQuotaCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+      {/* Queued Renewal Banner (if active deferred renewal exists) */}
+      {quota.queuedSubscription && (
+        <div className="p-3 rounded-lg bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/50 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div>
+              <span className="font-semibold text-blue-950 dark:text-blue-200">
+                Queued Early Renewal: {quota.queuedSubscription.plan.toUpperCase()} ({quota.queuedSubscription.billingInterval})
+              </span>
+              <p className="text-[11px] text-blue-700 dark:text-blue-300 mt-0.5">
+                Activates on {new Date(quota.queuedSubscription.startsAt).toLocaleDateString()} with fresh quota of {quota.queuedSubscription.operationsLimit.toLocaleString()} ops.
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 font-medium">
+            Deferred Active
+          </span>
+        </div>
+      )}
+
+      <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400">
         <span className="flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
           <span>Universal Overage Guarantee: Operations never halt unexpectedly.</span>
         </span>
-        <span className="font-mono">Billing Cycle: Monthly</span>
+        <span className="font-mono">
+          Cycle: {isYearly ? "Yearly (365d)" : "Monthly (30d)"}
+          {cycleStartFormatted && cycleEndFormatted ? ` • ${cycleStartFormatted} – ${cycleEndFormatted}` : ""}
+        </span>
       </div>
     </div>
   );
 }
-

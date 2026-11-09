@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { connectAdminDb, AdminReceipt, AdminShipment, AdminUser } from "@/lib/db";
+import {
+  connectAdminDb,
+  AdminReceipt,
+  AdminShipment,
+  AdminUser,
+  AdminPushSubscription,
+  AdminVendor,
+  AdminVendorBill,
+} from "@/lib/db";
 import { getRelayerStatus } from "@/lib/chain";
 import {
   getPendingQueueReceiptFilter,
@@ -34,6 +42,9 @@ export async function GET() {
       unanchoredShipments,
       merchantsCount,
       usersCount,
+      pushSubscriptionsCount,
+      vendorsCount,
+      vendorBillsCount,
       relayer,
       integrations,
     ] = await Promise.all([
@@ -45,6 +56,9 @@ export async function GET() {
       AdminShipment.countDocuments(getUnanchoredShipmentFilter()),
       AdminUser.countDocuments({ role: "merchant" }),
       AdminUser.countDocuments(),
+      AdminPushSubscription.countDocuments(),
+      AdminVendor.countDocuments(),
+      AdminVendorBill.countDocuments(),
       getRelayerStatus(),
       collectThirdPartyTelemetry(),
     ]);
@@ -71,6 +85,9 @@ export async function GET() {
           shipments: shipmentsCount,
           merchants: merchantsCount,
           users: usersCount,
+          pushSubscriptions: pushSubscriptionsCount,
+          vendors: vendorsCount,
+          vendorBills: vendorBillsCount,
         },
         queueDepth: {
           pendingReceipts,

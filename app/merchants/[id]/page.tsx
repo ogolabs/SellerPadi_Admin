@@ -23,6 +23,8 @@ import {
   Clock,
   History,
   Tag,
+  Briefcase,
+  Bell,
 } from "lucide-react";
 import { QUERY_TIMINGS } from "@/lib/query-config";
 import { formatMoney } from "@/lib/currency";
@@ -32,6 +34,16 @@ import { MerchantQuotaCard, type MerchantQuotaData } from "@/components/merchant
 import { MerchantInventoryTab, type InventoryItem } from "@/components/merchants/MerchantInventoryTab";
 import { MerchantAuditTrailTab, type AuditLogItem } from "@/components/merchants/MerchantAuditTrailTab";
 import { MerchantActivityTabs } from "@/components/merchants/MerchantActivityTabs";
+import {
+  MerchantVendorsTab,
+  type VendorItem,
+  type VendorBillItem,
+} from "@/components/merchants/MerchantVendorsTab";
+import {
+  MerchantReportsTab,
+  type ReportPreferencesData,
+  type ReportsSentData,
+} from "@/components/merchants/MerchantReportsTab";
 
 interface MerchantDetailResponse {
   merchant: {
@@ -49,10 +61,14 @@ interface MerchantDetailResponse {
     plan: string;
     operatingMode: string;
     subscriptionActive: boolean;
+    billingInterval?: "monthly" | "yearly";
     isSuspended: boolean;
     isEmailVerified?: boolean;
     isPhoneVerified?: boolean;
     authProvider?: string | null;
+    reportPreferences?: ReportPreferencesData | null;
+    reportsSent?: ReportsSentData | null;
+    pushSubscriptionsCount?: number;
     authenticators?: Array<{
       providerType: "google" | "email_otp" | "phone";
       providerKey: string;
@@ -81,10 +97,16 @@ interface MerchantDetailResponse {
     };
     branchesCount: number;
     teamCount: number;
+    vendorsCount?: number;
+    accountsPayableDue?: number;
+    unpaidBillsCount?: number;
+    pushSubscriptionsCount?: number;
   };
   quota: MerchantQuotaData;
   inventory: InventoryItem[];
   auditLogs: AuditLogItem[];
+  vendors?: VendorItem[];
+  vendorBills?: VendorBillItem[];
   branches: Array<{
     id: string;
     name: string;
@@ -130,7 +152,15 @@ export default function MerchantDetailPage() {
   const merchantId = params.id as string;
 
   const [activeTab, setActiveTab] = useState<
-    "verification" | "inventory" | "audit" | "branches" | "team" | "receipts" | "shipments"
+    | "verification"
+    | "inventory"
+    | "vendors"
+    | "reports"
+    | "audit"
+    | "branches"
+    | "team"
+    | "receipts"
+    | "shipments"
   >("verification");
   const [suspendModalOpen, setSuspendModalOpen] = useState(false);
 
@@ -464,6 +494,30 @@ export default function MerchantDetailPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab("vendors")}
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === "vendors"
+              ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+          }`}
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          <span>Vendors &amp; AP ({data?.vendors?.length || 0})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === "reports"
+              ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5" />
+          <span>Reports &amp; Alerts</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("audit")}
           className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "audit"
@@ -544,6 +598,24 @@ export default function MerchantDetailPage() {
 
         {activeTab === "inventory" && (
           <MerchantInventoryTab inventory={inventory || []} currency={merchant.currency} />
+        )}
+
+        {activeTab === "vendors" && (
+          <MerchantVendorsTab
+            vendors={data?.vendors || []}
+            vendorBills={data?.vendorBills || []}
+            currency={merchant.currency}
+          />
+        )}
+
+        {activeTab === "reports" && (
+          <MerchantReportsTab
+            reportPreferences={merchant.reportPreferences}
+            reportsSent={merchant.reportsSent}
+            pushSubscriptionsCount={merchant.pushSubscriptionsCount ?? stats.pushSubscriptionsCount ?? 0}
+            plan={merchant.plan}
+            businessEmail={merchant.businessEmail}
+          />
         )}
 
         {activeTab === "audit" && (
