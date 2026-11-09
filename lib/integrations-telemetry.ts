@@ -478,6 +478,7 @@ export function checkCronStatus(): CronTelemetry {
     status: hasCronSecret ? "operational" : "unconfigured",
     hasCronSecret,
     jobs: [
+      { name: "Merkle Batch Anchor", schedule: "Every 60s / On-demand", endpoint: "/api/cron/batch-anchor" },
       { name: "Merchant Reports PDF", schedule: "Daily at 23:00 UTC", endpoint: "/api/cron/merchant-reports" },
       { name: "Subscription Reminders", schedule: "Daily at 08:00 UTC", endpoint: "/api/cron/subscription-reminders" },
     ],
