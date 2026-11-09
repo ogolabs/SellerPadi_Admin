@@ -8,13 +8,14 @@ export interface TierPricingInfo {
   annualQuota: number;
 }
 
-export const TIER_PRICING: Record<string, TierPricingInfo> = {
+export const BASE_TIER_MONTHLY: Record<
+  string,
+  { name: string; ngn: number; usd: number; quota: number; annualQuota: number }
+> = {
   free: {
     name: "Free Tier",
     ngn: 0,
     usd: 0,
-    ngnYearly: 0,
-    usdYearly: 0,
     quota: 100,
     annualQuota: 1200,
   },
@@ -22,8 +23,6 @@ export const TIER_PRICING: Record<string, TierPricingInfo> = {
     name: "Starter 500",
     ngn: 1000,
     usd: 2.01,
-    ngnYearly: 11400,
-    usdYearly: 22.91,
     quota: 500,
     annualQuota: 6000,
   },
@@ -31,8 +30,6 @@ export const TIER_PRICING: Record<string, TierPricingInfo> = {
     name: "Growth 1,000",
     ngn: 2000,
     usd: 3.03,
-    ngnYearly: 22800,
-    usdYearly: 34.54,
     quota: 1000,
     annualQuota: 12000,
   },
@@ -40,8 +37,6 @@ export const TIER_PRICING: Record<string, TierPricingInfo> = {
     name: "Business 2,500",
     ngn: 5000,
     usd: 6.07,
-    ngnYearly: 57000,
-    usdYearly: 69.2,
     quota: 2500,
     annualQuota: 30000,
   },
@@ -49,12 +44,34 @@ export const TIER_PRICING: Record<string, TierPricingInfo> = {
     name: "Scale 5,000",
     ngn: 10000,
     usd: 11.14,
-    ngnYearly: 114000,
-    usdYearly: 127.0,
     quota: 5000,
     annualQuota: 60000,
   },
 };
+
+export function calculateYearlyPrice(monthlyAmount: number, discountPercent: number = 5): number {
+  if (monthlyAmount <= 0) return 0;
+  const safeDiscount = Math.max(0, Math.min(50, discountPercent));
+  return Math.round(monthlyAmount * 12 * (1 - safeDiscount / 100) * 100) / 100;
+}
+
+export function getTierPricing(discountPercent: number = 5): Record<string, TierPricingInfo> {
+  const result: Record<string, TierPricingInfo> = {};
+  for (const [key, base] of Object.entries(BASE_TIER_MONTHLY)) {
+    result[key] = {
+      name: base.name,
+      ngn: base.ngn,
+      usd: base.usd,
+      ngnYearly: Math.round(calculateYearlyPrice(base.ngn, discountPercent)),
+      usdYearly: calculateYearlyPrice(base.usd, discountPercent),
+      quota: base.quota,
+      annualQuota: base.annualQuota,
+    };
+  }
+  return result;
+}
+
+export const TIER_PRICING: Record<string, TierPricingInfo> = getTierPricing(5);
 
 export const DEFAULT_CURRENCY_MAP: Record<string, string> = {
   NG: "NGN",

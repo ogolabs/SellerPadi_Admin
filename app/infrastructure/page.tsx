@@ -16,6 +16,7 @@ import { QUERY_TIMINGS } from "@/lib/query-config";
 import type { ThirdPartyIntegrationsTelemetry } from "@/lib/integrations-telemetry";
 import type { GasFeeMetrics } from "@/lib/chain";
 import { ProviderIntegrationsGrid } from "@/components/infrastructure/ProviderIntegrationsGrid";
+import { PricingConfigCard } from "@/components/infrastructure/PricingConfigCard";
 
 interface TelemetryData {
   status: string;
@@ -377,7 +378,10 @@ export default function InfrastructurePage() {
             </div>
           </div>
 
-          {/* Section 2: Third-Party Authentication & Communications Telemetry */}
+          {/* Section 2: Annual Pricing & Discount Controls */}
+          <PricingConfigCard />
+
+          {/* Section 3: Third-Party Authentication & Communications Telemetry */}
           <ProviderIntegrationsGrid integrations={data?.integrations} />
 
           {/* Section 3: Host Process & Node Runtime Diagnostics */}

@@ -691,5 +691,27 @@ export const AdminVendorBill: Model<IAdminVendorBillDoc> =
   mongoose.models.AdminVendorBill ||
   mongoose.model<IAdminVendorBillDoc>("AdminVendorBill", AdminVendorBillSchema, "vendorbills");
 
+export interface ISystemConfigDoc {
+  key: string;
+  yearlyDiscountPercent: number;
+  updatedBy?: string | null;
+  updatedAt?: Date;
+  createdAt?: Date;
+}
+
+const AdminSystemConfigSchema = new Schema<ISystemConfigDoc>(
+  {
+    key: { type: String, required: true, unique: true, default: "pricing_config" },
+    yearlyDiscountPercent: { type: Number, required: true, default: 5, min: 0, max: 50 },
+    updatedBy: { type: String, default: null },
+  },
+  { timestamps: true, collection: "systemconfigs" }
+);
+
+export const AdminSystemConfig: Model<ISystemConfigDoc> =
+  mongoose.models.AdminSystemConfig ||
+  mongoose.model<ISystemConfigDoc>("AdminSystemConfig", AdminSystemConfigSchema, "systemconfigs");
+
+
 
 
