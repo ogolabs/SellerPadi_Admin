@@ -1,4 +1,4 @@
-import { AdminUser } from "@/lib/db";
+import { AdminUser, AdminPushSubscription } from "@/lib/db";
 import { getZeptoMailDispatchState } from "@/lib/email";
 
 export interface TermiiTelemetry {
@@ -53,11 +53,26 @@ export interface DiditKycTelemetry {
   error?: string;
 }
 
+export interface WebPushTelemetry {
+  status: "operational" | "unconfigured";
+  isVapidConfigured: boolean;
+  publicKeyMasked: string;
+  totalSubscribers: number;
+}
+
+export interface CronTelemetry {
+  status: "operational" | "unconfigured";
+  hasCronSecret: boolean;
+  jobs: Array<{ name: string; schedule: string; endpoint: string }>;
+}
+
 export interface ThirdPartyIntegrationsTelemetry {
   termii: TermiiTelemetry;
   zeptoMail: ZeptoMailTelemetry;
   googleIdentity: GoogleIdentityTelemetry;
   diditKyc: DiditKycTelemetry;
+  webPush: WebPushTelemetry;
+  cron: CronTelemetry;
 }
 
 /**
@@ -430,22 +445,52 @@ export async function checkDiditKycStatus(): Promise<DiditKycTelemetry> {
   }
 }
 
+export async function checkWebPushStatus(): Promise<WebPushTelemetry> {
+  const pubKey = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY || "").trim();
+  const privKey = (process.env.VAPID_PRIVATE_KEY || "").trim();
+  const isVapidConfigured = Boolean(pubKey && privKey);
+  const totalSubscribers = await AdminPushSubscription.countDocuments().catch(() => 0);
+
+  return {
+    status: isVapidConfigured ? "operational" : "unconfigured",
+    isVapidConfigured,
+    publicKeyMasked: pubKey ? `${pubKey.slice(0, 8)}...${pubKey.slice(-6)}` : "Missing",
+    totalSubscribers,
+  };
+}
+
+export function checkCronStatus(): CronTelemetry {
+  const hasCronSecret = Boolean((process.env.CRON_SECRET || "").trim());
+  return {
+    status: hasCronSecret ? "operational" : "unconfigured",
+    hasCronSecret,
+    jobs: [
+      { name: "Merchant Reports PDF", schedule: "Daily at 23:00 UTC", endpoint: "/api/cron/merchant-reports" },
+      { name: "Subscription Reminders", schedule: "Daily at 08:00 UTC", endpoint: "/api/cron/subscription-reminders" },
+    ],
+  };
+}
+
 /**
  * Collects complete third-party integration telemetry in parallel.
  */
 export async function collectThirdPartyTelemetry(): Promise<ThirdPartyIntegrationsTelemetry> {
-  const [termii, googleIdentity, diditKyc] = await Promise.all([
+  const [termii, googleIdentity, diditKyc, webPush] = await Promise.all([
     checkTermiiStatus(),
     checkGoogleIdentityStatus(),
     checkDiditKycStatus(),
+    checkWebPushStatus(),
   ]);
 
   const zeptoMail = checkZeptoMailStatus();
+  const cron = checkCronStatus();
 
   return {
     termii,
     zeptoMail,
     googleIdentity,
     diditKyc,
+    webPush,
+    cron,
   };
 }

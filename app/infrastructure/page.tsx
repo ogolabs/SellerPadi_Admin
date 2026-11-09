@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { QUERY_TIMINGS } from "@/lib/query-config";
 import type { ThirdPartyIntegrationsTelemetry } from "@/lib/integrations-telemetry";
+import type { GasFeeMetrics } from "@/lib/chain";
 import { ProviderIntegrationsGrid } from "@/components/infrastructure/ProviderIntegrationsGrid";
 
 interface TelemetryData {
@@ -29,6 +30,9 @@ interface TelemetryData {
       shipments: number;
       merchants: number;
       users: number;
+      pushSubscriptions?: number;
+      vendors?: number;
+      vendorBills?: number;
     };
     queueDepth: {
       unanchoredReceipts: number;
@@ -40,12 +44,14 @@ interface TelemetryData {
     address: string;
     balanceAvax?: string;
     balanceEtn?: string;
+    balanceUsd?: string;
     isLowBalance: boolean;
     evmNonce: number;
     blockNumber: number;
     rpcLatencyMs: number;
     network: string;
     explorerUrl?: string;
+    gasFee?: GasFeeMetrics;
   };
   integrations?: ThirdPartyIntegrationsTelemetry;
   runtime: {
@@ -184,10 +190,22 @@ export default function InfrastructurePage() {
                         {data?.database.collections.shipments.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
                       <span className="text-slate-500 dark:text-slate-400">Merchants Registered</span>
                       <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
                         {data?.database.collections.merchants.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400">Suppliers &amp; AP Bills</span>
+                      <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
+                        {(data?.database.collections.vendors ?? 0).toLocaleString()} vendors &bull; {(data?.database.collections.vendorBills ?? 0).toLocaleString()} bills
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">Web Push Endpoints</span>
+                      <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
+                        {(data?.database.collections.pushSubscriptions ?? 0).toLocaleString()} devices
                       </span>
                     </div>
                   </div>
@@ -226,6 +244,11 @@ export default function InfrastructurePage() {
                         }`}
                       >
                         {data?.relayer.balanceAvax ?? data?.relayer.balanceEtn} AVAX
+                        {data?.relayer.balanceUsd && (
+                          <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
+                            (~${data.relayer.balanceUsd} USD)
+                          </span>
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
@@ -240,10 +263,30 @@ export default function InfrastructurePage() {
                         #{data?.relayer.blockNumber}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
                       <span className="text-slate-500 dark:text-slate-400">RPC Latency</span>
                       <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
                         {data?.relayer.rpcLatencyMs} ms
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
+                      <span className="text-slate-500 dark:text-slate-400">Gas Price (Base)</span>
+                      <span className="text-slate-900 dark:text-slate-200 font-mono font-bold">
+                        {data?.relayer.gasFee?.gasPriceGwei || "25.00"} Gwei
+                        {data?.relayer.gasFee?.avaxPriceUsd ? (
+                          <span className="text-slate-400 dark:text-slate-500 font-normal text-[11px] ml-1.5">
+                            (AVAX: ${data.relayer.gasFee.avaxPriceUsd.toFixed(2)})
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">Avg Gas / Tx</span>
+                      <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
+                        ~{data?.relayer.gasFee?.avgFeeNative || "0.00225"} {data?.relayer.gasFee?.currencySymbol || "AVAX"}
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold ml-1.5">
+                          ({data?.relayer.gasFee?.avgFeeUsd || "< $0.0001"})
+                        </span>
                       </span>
                     </div>
                   </div>

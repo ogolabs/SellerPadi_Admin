@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MessageSquare, Mail, ShieldCheck, UserCheck } from "lucide-react";
+import { MessageSquare, Mail, ShieldCheck, UserCheck, Bell, Clock } from "lucide-react";
 import type { ThirdPartyIntegrationsTelemetry } from "@/lib/integrations-telemetry";
 
 interface ProviderIntegrationsGridProps {
@@ -14,7 +14,7 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
       <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4">
         Integrated Services &amp; Provider Gateways
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Termii SMS Gateway */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-xs">
           <div>
@@ -255,6 +255,113 @@ export function ProviderIntegrationsGrid({ integrations }: ProviderIntegrationsG
             <span className="font-mono text-slate-400 dark:text-slate-500">
               Bal: {integrations?.diditKyc.balance || "$0.00"}
             </span>
+          </div>
+        </div>
+
+        {/* Web Push (VAPID) Gateway */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-xs">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">Web Push</h3>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">VAPID Push Service</span>
+                </div>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                  integrations?.webPush.status === "operational"
+                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
+                    : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60"
+                }`}
+              >
+                {integrations?.webPush.status || "unconfigured"}
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1 text-xs">
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">VAPID Keys</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">
+                  {integrations?.webPush.isVapidConfigured ? "Configured" : "Missing"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">Public Key</span>
+                <span
+                  className="text-slate-900 dark:text-slate-200 font-mono truncate max-w-30"
+                  title={integrations?.webPush.publicKeyMasked}
+                >
+                  {integrations?.webPush.publicKeyMasked}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">Registered Devices</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
+                  {integrations?.webPush.totalSubscribers ?? 0} endpoints
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Protocol</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">RFC 8292 Standard</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400">
+            Real-time sales &amp; dispute alerts
+          </div>
+        </div>
+
+        {/* Automated Cron Sweeps */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-xs">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">Cron Automation</h3>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Automated Sweeps</span>
+                </div>
+              </div>
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                  integrations?.cron.status === "operational"
+                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
+                    : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60"
+                }`}
+              >
+                {integrations?.cron.status || "unconfigured"}
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-1 text-xs">
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">CRON_SECRET</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">
+                  {integrations?.cron.hasCronSecret ? "Configured" : "Missing"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">PDF Reports</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">23:00 UTC (Daily)</span>
+              </div>
+              <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-500 dark:text-slate-400">Subscription Alerts</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">08:00 UTC (Daily)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 dark:text-slate-400">Scheduled Jobs</span>
+                <span className="text-slate-900 dark:text-slate-200 font-mono">2 Active Sweeps</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400">
+            ZeptoMail PDF &amp; Renewal Engine
           </div>
         </div>
       </div>

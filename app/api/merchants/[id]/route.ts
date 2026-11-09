@@ -10,6 +10,9 @@ import {
   AdminShipment,
   AdminInventoryProduct,
   AdminAuditLog,
+  AdminPushSubscription,
+  AdminVendor,
+  AdminVendorBill,
 } from "@/lib/db";
 import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/auth";
 
@@ -68,6 +71,10 @@ export async function GET(
       auditLogs,
       monthReceiptsCount,
       monthShipmentsCount,
+      pushSubscriptionsCount,
+      vendors,
+      vendorBills,
+      openBillsAgg,
     ] = await Promise.all([
       AdminBranch.find({ merchantAddress })
         .select("_id name location phone managerName managerAddress isDefault createdAt")
@@ -135,6 +142,13 @@ export async function GET(
         .lean(),
       AdminReceipt.countDocuments({ merchantAddress, createdAt: { $gte: startOfMonth } }),
       AdminShipment.countDocuments({ shipperAddress: merchantAddress, createdAt: { $gte: startOfMonth } }),
+      AdminPushSubscription.countDocuments({ ownerAddress: merchantAddress }),
+      AdminVendor.find({ merchantAddress }).sort({ createdAt: -1 }).limit(50).lean(),
+      AdminVendorBill.find({ merchantAddress }).sort({ createdAt: -1 }).limit(30).lean(),
+      AdminVendorBill.aggregate<{ _id: null; totalBalanceDue: number; unpaidCount: number }>([
+        { $match: { merchantAddress, status: { $in: ["unpaid", "partially_paid"] } } },
+        { $group: { _id: null, totalBalanceDue: { $sum: "$balanceDue" }, unpaidCount: { $sum: 1 } } },
+      ]),
     ]);
 
     const stats = receiptStats[0] || {
@@ -147,7 +161,12 @@ export async function GET(
 
     // Calculate real-time SaaS quota metrics
     const planKey = (user.plan || "free").toLowerCase().replace(/[\s-]/g, "_");
-    const baseLimit = PLAN_LIMITS[planKey] || 100;
+    const billingInterval = ((user.billingInterval || user.billingCycle || "monthly") as string).toLowerCase() === "yearly"
+      ? "yearly"
+      : "monthly";
+    const isYearly = billingInterval === "yearly";
+    const monthlyPlanLimit = PLAN_LIMITS[planKey] || 100;
+    const baseLimit = isYearly ? monthlyPlanLimit * 12 : monthlyPlanLimit;
     const currentMonthOps =
       (monthReceiptsCount + monthShipmentsCount) || (user.operationsThisMonth || 0);
     const rolloverQuota = user.rolloverQuota || 0;
@@ -156,6 +175,8 @@ export async function GET(
     const isDomestic = (user.currency || "NGN").toUpperCase() === "NGN" || (user.country || "NG").toUpperCase() === "NG";
     const overageRate = isDomestic ? 10 : 0.003;
     const accruedOverageCharge = user.overageCharges || (overageCount * overageRate);
+
+    const openBillsSummary = openBillsAgg[0] || { totalBalanceDue: 0, unpaidCount: 0 };
 
     return NextResponse.json({
       merchant: {
@@ -173,6 +194,7 @@ export async function GET(
         plan: user.plan || "free",
         operatingMode: user.operatingMode || "hybrid",
         subscriptionActive: Boolean(user.subscriptionActive),
+        billingInterval,
         isSuspended: Boolean(user.isSuspended),
         isEmailVerified: Boolean(user.isEmailVerified),
         isPhoneVerified: Boolean(user.isPhoneVerified),
@@ -180,6 +202,9 @@ export async function GET(
         authenticators: user.authenticators || [],
         cryptoIdentity: user.cryptoIdentity || null,
         verification: user.verification || null,
+        reportPreferences: user.reportPreferences || null,
+        reportsSent: user.reportsSent || null,
+        pushSubscriptionsCount,
         createdAt: user.createdAt,
       },
       stats: {
@@ -195,10 +220,20 @@ export async function GET(
         },
         branchesCount: branches.length,
         teamCount: teamMembers.length,
+        vendorsCount: vendors.length,
+        accountsPayableDue: openBillsSummary.totalBalanceDue,
+        unpaidBillsCount: openBillsSummary.unpaidCount,
+        pushSubscriptionsCount,
       },
       quota: {
         plan: user.plan || "free",
         baseLimit,
+        monthlyPlanLimit,
+        isYearly,
+        billingInterval,
+        billingCycleStart: user.billingCycleStart ? user.billingCycleStart.toISOString() : null,
+        billingCycleEnd: user.billingCycleEnd ? user.billingCycleEnd.toISOString() : null,
+        queuedSubscription: user.queuedSubscription || null,
         rolloverQuota,
         effectiveLimit,
         currentMonthOperations: currentMonthOps,
@@ -269,6 +304,50 @@ export async function GET(
         isDisputed: Boolean(s.isDisputed),
         createdAt: s.createdAt,
       })),
+      vendors: vendors.map((v) => ({
+        id: v._id,
+        name: v.name,
+        companyName: v.companyName || null,
+        phone: v.phone,
+        email: v.email || null,
+        address: v.address || null,
+        paymentTermsDays: v.paymentTermsDays || 0,
+        notes: v.notes || null,
+        totalPurchased: v.totalPurchased || 0,
+        totalPaid: v.totalPaid || 0,
+        totalOwed: v.totalOwed || 0,
+        billsCount: v.billsCount || 0,
+        isActive: Boolean(v.isActive),
+        createdAt: v.createdAt,
+      })),
+      vendorBills: vendorBills.map((b) => {
+        const rawDate = b.issueDate || b.billDate || b.createdAt;
+        const validDate = rawDate ? new Date(rawDate).toISOString() : new Date().toISOString();
+        const paymentsList = Array.isArray(b.paymentHistory)
+          ? b.paymentHistory
+          : Array.isArray(b.payments)
+          ? b.payments
+          : [];
+
+        return {
+          id: b._id,
+          billNumber: b.billNumber,
+          vendorId: b.vendorId,
+          vendorName: b.vendorName,
+          branchId: b.branchId || null,
+          branchName: b.branchName || null,
+          itemsCount: Array.isArray(b.items) ? b.items.length : 0,
+          totalAmount: b.totalAmount,
+          amountPaid: b.amountPaid,
+          balanceDue: b.balanceDue,
+          status: b.status,
+          billDate: validDate,
+          issueDate: validDate,
+          dueDate: b.dueDate ? new Date(b.dueDate).toISOString() : null,
+          paymentsCount: paymentsList.length,
+          createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : validDate,
+        };
+      }),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";

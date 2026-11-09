@@ -27,6 +27,7 @@ import { RelayerQuotaCard } from "@/components/dashboard/RelayerQuotaCard";
 import { CustodyDistributionCard } from "@/components/dashboard/CustodyDistributionCard";
 import { RecentAuditFeed } from "@/components/dashboard/RecentAuditFeed";
 import { QUERY_TIMINGS } from "@/lib/query-config";
+import type { GasFeeMetrics } from "@/lib/chain";
 
 interface MetricsResponse {
   success: boolean;
@@ -67,6 +68,17 @@ interface MetricsResponse {
     formattedInternationalUsd: string;
     activePaidSubscribers: number;
     conversionRatePercent: string;
+    monthlySubscribers?: number;
+    yearlySubscribers?: number;
+  };
+  arr?: {
+    totalUsd: number;
+    formattedTotalUsd: string;
+    domesticNgn: number;
+    formattedDomesticNgn: string;
+    internationalUsd: number;
+    formattedInternationalUsd: string;
+    activePaidSubscribers: number;
   };
   overage?: {
     totalNgn: number;
@@ -81,8 +93,13 @@ interface MetricsResponse {
       merchantCount: number;
       percentage: number;
       monthlyOpsQuota: number;
+      annualOpsQuota?: number;
       priceNgn: number;
       priceUsd: number;
+      priceNgnYearly?: number;
+      priceUsdYearly?: number;
+      monthlyCount?: number;
+      yearlyCount?: number;
     }>;
     payingMerchants: number;
     freeMerchants: number;
@@ -96,8 +113,10 @@ interface MetricsResponse {
     isLowBalance: boolean;
     balanceAvax?: string;
     balanceEtn?: string;
+    balanceUsd?: string;
     unanchoredQueue: number;
     network: "mainnet" | "testnet";
+    gasFee?: GasFeeMetrics;
   };
   incidents: {
     activeCount: number;
@@ -419,6 +438,7 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-7">
           <MonetizationCard
             mrr={data?.mrr}
+            arr={data?.arr}
             overage={data?.overage}
             isLoading={isLoading}
           />
@@ -461,6 +481,7 @@ export default function AdminDashboardPage() {
             unanchoredQueue={data?.relayer.unanchoredQueue || 0}
             isLowBalance={Boolean(data?.relayer.isLowBalance)}
             network={data?.relayer.network}
+            gasFee={data?.relayer.gasFee}
             isLoading={isLoading}
           />
         </div>

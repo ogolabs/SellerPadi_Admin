@@ -12,6 +12,17 @@ interface MonetizationCardProps {
     formattedInternationalUsd: string;
     activePaidSubscribers: number;
     conversionRatePercent: string;
+    monthlySubscribers?: number;
+    yearlySubscribers?: number;
+  };
+  arr?: {
+    totalUsd: number;
+    formattedTotalUsd: string;
+    domesticNgn: number;
+    formattedDomesticNgn: string;
+    internationalUsd: number;
+    formattedInternationalUsd: string;
+    activePaidSubscribers: number;
   };
   overage?: {
     totalNgn: number;
@@ -24,10 +35,13 @@ interface MonetizationCardProps {
 
 export function MonetizationCard({
   mrr,
+  arr,
   overage,
   isLoading = false,
 }: MonetizationCardProps) {
   const activePaid = mrr?.activePaidSubscribers || 0;
+  const yearlyCount = mrr?.yearlySubscribers || 0;
+  const monthlyCount = mrr?.monthlySubscribers || (activePaid - yearlyCount);
   const conversionRate = mrr?.conversionRatePercent || "0.0";
 
   return (
@@ -48,19 +62,26 @@ export function MonetizationCard({
         </span>
       </div>
 
-      {/* Main MRR Highlight Header */}
+      {/* Main MRR & ARR Highlight Header */}
       <div className="py-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 text-xs">
-          <div className="text-slate-600 dark:text-slate-300 font-medium">
-            Total Run-Rate:{" "}
+          <div>
+            <span className="text-slate-600 dark:text-slate-300 font-medium">Monthly Run-Rate: </span>
             <span className="text-slate-900 dark:text-white font-bold font-mono text-xl sm:text-2xl ml-1">
               {isLoading ? "..." : mrr?.formattedTotalUsd || "$0.00"}
             </span>{" "}
-            <span className="text-slate-500 text-xs">/ month</span>
+            <span className="text-slate-500 text-xs">/ mo</span>
+            {arr && (
+              <span className="ml-3 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                (ARR: <strong className="text-slate-700 dark:text-slate-300">{isLoading ? "..." : arr.formattedTotalUsd}</strong>/yr)
+              </span>
+            )}
           </div>
           <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
             <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>{activePaid} paying {activePaid === 1 ? "merchant" : "merchants"}</span>
+            <span>
+              {activePaid} paying ({monthlyCount} mo &bull; {yearlyCount} yr)
+            </span>
           </span>
         </div>
 
