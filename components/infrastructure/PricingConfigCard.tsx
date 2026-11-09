@@ -12,6 +12,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { getTierPricing, TierPricingInfo } from "@/lib/pricing-config";
+import { QUERY_TIMINGS } from "@/lib/query-config";
 
 interface PricingConfigResponse {
   yearlyDiscountPercent: number;
@@ -35,7 +36,7 @@ export function PricingConfigCard() {
       }
       return res.json();
     },
-    staleTime: 30_000,
+    staleTime: QUERY_TIMINGS.CONFIG_STALE_MS,
   });
 
   useEffect(() => {
@@ -165,14 +166,14 @@ export function PricingConfigCard() {
                 />
 
                 {/* Preset Chips */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                  <span className="text-[11px] text-slate-400 mr-1">Presets:</span>
+                <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                  <span className="text-[10px] sm:text-[11px] text-slate-400 mr-0.5">Presets:</span>
                   {presets.map((p) => (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => setDiscountInput(p.value)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      className={`px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium transition-all ${
                         discountInput === p.value
                           ? "bg-blue-600 text-white shadow-xs"
                           : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
@@ -185,11 +186,11 @@ export function PricingConfigCard() {
               </div>
 
               {/* Action Button */}
-              <div className="flex flex-col justify-end pt-2 md:pt-0">
+              <div className="flex flex-col justify-end pt-1 md:pt-0">
                 <button
                   onClick={() => updateMutation.mutate(discountInput)}
                   disabled={!hasChanges || updateMutation.isPending}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-[0.98] cursor-pointer"
+                  className="w-full sm:w-auto px-3.5 py-1.5 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs active:scale-[0.98] cursor-pointer"
                 >
                   {updateMutation.isPending ? (
                     <>
@@ -224,13 +225,13 @@ export function PricingConfigCard() {
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>Live Preview: Recalculated Annual Tier Pricing Matrix</span>
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400">Market View:</span>
+              <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                <span className="text-[10px] sm:text-[11px] text-slate-400">Market View:</span>
                 <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
                   <button
                     type="button"
                     onClick={() => setPreviewCurrency("NGN")}
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                    className={`px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium transition-all ${
                       previewCurrency === "NGN"
                         ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
                         : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
@@ -241,7 +242,7 @@ export function PricingConfigCard() {
                   <button
                     type="button"
                     onClick={() => setPreviewCurrency("USD")}
-                    className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium transition-all ${
+                    className={`px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium transition-all ${
                       previewCurrency === "USD"
                         ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
                         : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"

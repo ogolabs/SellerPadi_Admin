@@ -693,7 +693,13 @@ export const AdminVendorBill: Model<IAdminVendorBillDoc> =
 
 export interface ISystemConfigDoc {
   key: string;
-  yearlyDiscountPercent: number;
+  yearlyDiscountPercent?: number;
+  termiiMinBalanceNgn?: number;
+  relayerMinBalanceNative?: number;
+  diditMinChecksRemaining?: number;
+  alertWebhookUrl?: string | null;
+  alertEmailRecipient?: string | null;
+  lastAlertDispatchedAt?: Date | null;
   updatedBy?: string | null;
   updatedAt?: Date;
   createdAt?: Date;
@@ -702,10 +708,16 @@ export interface ISystemConfigDoc {
 const AdminSystemConfigSchema = new Schema<ISystemConfigDoc>(
   {
     key: { type: String, required: true, unique: true, default: "pricing_config" },
-    yearlyDiscountPercent: { type: Number, required: true, default: 5, min: 0, max: 50 },
+    yearlyDiscountPercent: { type: Number, default: 5, min: 0, max: 50 },
+    termiiMinBalanceNgn: { type: Number, default: 500, min: 0 },
+    relayerMinBalanceNative: { type: Number, default: 0.5, min: 0 },
+    diditMinChecksRemaining: { type: Number, default: 10, min: 0 },
+    alertWebhookUrl: { type: String, default: null },
+    alertEmailRecipient: { type: String, default: null },
+    lastAlertDispatchedAt: { type: Date, default: null },
     updatedBy: { type: String, default: null },
   },
-  { timestamps: true, collection: "systemconfigs" }
+  { timestamps: true, collection: "systemconfigs", strict: false }
 );
 
 export const AdminSystemConfig: Model<ISystemConfigDoc> =

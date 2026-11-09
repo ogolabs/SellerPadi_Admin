@@ -17,6 +17,7 @@ import type { ThirdPartyIntegrationsTelemetry } from "@/lib/integrations-telemet
 import type { GasFeeMetrics } from "@/lib/chain";
 import { ProviderIntegrationsGrid } from "@/components/infrastructure/ProviderIntegrationsGrid";
 import { PricingConfigCard } from "@/components/infrastructure/PricingConfigCard";
+import { ProviderAlertsCard } from "@/components/infrastructure/ProviderAlertsCard";
 
 interface TelemetryData {
   status: string;
@@ -113,11 +114,11 @@ export default function InfrastructurePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             <span>Refresh Telemetry</span>
@@ -359,7 +360,7 @@ export default function InfrastructurePage() {
                   <button
                     onClick={() => reconcileMutation.mutate()}
                     disabled={reconcileMutation.isPending}
-                    className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
+                    className="w-full py-1.5 sm:py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
                   >
                     {reconcileMutation.isPending ? (
                       <>
@@ -381,10 +382,13 @@ export default function InfrastructurePage() {
           {/* Section 2: Annual Pricing & Discount Controls */}
           <PricingConfigCard />
 
-          {/* Section 3: Third-Party Authentication & Communications Telemetry */}
+          {/* Section 3: Provider Guardrails & Alert Settings */}
+          <ProviderAlertsCard />
+
+          {/* Section 4: Third-Party Authentication & Communications Telemetry */}
           <ProviderIntegrationsGrid integrations={data?.integrations} />
 
-          {/* Section 3: Host Process & Node Runtime Diagnostics */}
+          {/* Section 5: Host Process & Node Runtime Diagnostics */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs">
             <div className="flex items-center gap-2.5 mb-4">
               <Cpu className="w-5 h-5 text-slate-500 dark:text-slate-400" />

@@ -1,5 +1,6 @@
 import { AdminUser, AdminPushSubscription } from "@/lib/db";
 import { getZeptoMailDispatchState } from "@/lib/email";
+import { getProviderAlertsConfig, maybeDispatchProviderAlert } from "@/lib/provider-alerts";
 
 export interface TermiiTelemetry {
   status: "operational" | "low_balance" | "unconfigured" | "error";
@@ -9,6 +10,8 @@ export interface TermiiTelemetry {
   senderId: string;
   latencyMs?: number;
   error?: string;
+  estimatedSmsRemaining?: number;
+  thresholdNgn?: number;
 }
 
 export interface ZeptoMailTelemetry {
@@ -73,12 +76,20 @@ export interface ThirdPartyIntegrationsTelemetry {
   diditKyc: DiditKycTelemetry;
   webPush: WebPushTelemetry;
   cron: CronTelemetry;
+  alertsConfig?: {
+    termiiMinBalanceNgn: number;
+    relayerMinBalanceNative: number;
+    diditMinChecksRemaining: number;
+    hasWebhook: boolean;
+    hasEmail: boolean;
+    lastAlertDispatchedAt?: string | null;
+  };
 }
 
 /**
  * Probes Termii SMS Token API for account balance & channel status.
  */
-export async function checkTermiiStatus(): Promise<TermiiTelemetry> {
+export async function checkTermiiStatus(minBalanceThresholdNgn = 500): Promise<TermiiTelemetry> {
   const apiKey = process.env.TERMII_API_KEY?.trim();
   const rawBaseUrl = process.env.TERMII_BASE_URL?.trim() || "https://v4.api.termii.com";
   const baseUrl = rawBaseUrl.replace(/\/+$/, "");
@@ -112,8 +123,8 @@ export async function checkTermiiStatus(): Promise<TermiiTelemetry> {
     if (res.ok && typeof data.balance === "number") {
       const balance = data.balance;
       const currency = typeof data.currency === "string" ? data.currency : "NGN";
-      // Below 10 units is low balance notice
-      const status = balance < 10 ? "low_balance" : "operational";
+      const status = balance < minBalanceThresholdNgn ? "low_balance" : "operational";
+      const estimatedSmsRemaining = Math.max(0, Math.floor(balance / 4.0)); // ~₦4.00 per Termii SMS
 
       return {
         status,
@@ -122,6 +133,8 @@ export async function checkTermiiStatus(): Promise<TermiiTelemetry> {
         channel,
         senderId,
         latencyMs,
+        estimatedSmsRemaining,
+        thresholdNgn: minBalanceThresholdNgn,
       };
     }
 
@@ -475,8 +488,10 @@ export function checkCronStatus(): CronTelemetry {
  * Collects complete third-party integration telemetry in parallel.
  */
 export async function collectThirdPartyTelemetry(): Promise<ThirdPartyIntegrationsTelemetry> {
+  const alertsConfig = await getProviderAlertsConfig();
+
   const [termii, googleIdentity, diditKyc, webPush] = await Promise.all([
-    checkTermiiStatus(),
+    checkTermiiStatus(alertsConfig.termiiMinBalanceNgn),
     checkGoogleIdentityStatus(),
     checkDiditKycStatus(),
     checkWebPushStatus(),
@@ -485,6 +500,29 @@ export async function collectThirdPartyTelemetry(): Promise<ThirdPartyIntegratio
   const zeptoMail = checkZeptoMailStatus();
   const cron = checkCronStatus();
 
+  // If Termii balance is below safety threshold, trigger webhook alert (subject to cooldown)
+  if (termii.status === "low_balance" && termii.balance !== undefined) {
+    void maybeDispatchProviderAlert({
+      serviceName: "Termii SMS Gateway",
+      level: "warning",
+      message: `Termii balance (${termii.balance} NGN, ~${termii.estimatedSmsRemaining ?? 0} SMS remaining) has dropped below the safety threshold of ${alertsConfig.termiiMinBalanceNgn} NGN.`,
+      currentValue: `${termii.balance} NGN`,
+      threshold: `${alertsConfig.termiiMinBalanceNgn} NGN`,
+      rechargeUrl: "https://accounts.termii.com/#/wallet",
+    });
+  }
+
+  // If ZeptoMail credit is exhausted, trigger critical alert
+  if (zeptoMail.status === "credit_exhausted") {
+    void maybeDispatchProviderAlert({
+      serviceName: "ZeptoMail Email Dispatch",
+      level: "critical",
+      message: "ZeptoMail transactional email credits are exhausted. Merchant email OTP and statements are failing.",
+      currentValue: "Credit Exhausted",
+      rechargeUrl: "https://mailadmin.zoho.com/cpanel/index.do",
+    });
+  }
+
   return {
     termii,
     zeptoMail,
@@ -492,5 +530,13 @@ export async function collectThirdPartyTelemetry(): Promise<ThirdPartyIntegratio
     diditKyc,
     webPush,
     cron,
+    alertsConfig: {
+      termiiMinBalanceNgn: alertsConfig.termiiMinBalanceNgn,
+      relayerMinBalanceNative: alertsConfig.relayerMinBalanceNative,
+      diditMinChecksRemaining: alertsConfig.diditMinChecksRemaining,
+      hasWebhook: Boolean(alertsConfig.alertWebhookUrl),
+      hasEmail: Boolean(alertsConfig.alertEmailRecipient),
+      lastAlertDispatchedAt: alertsConfig.lastAlertDispatchedAt,
+    },
   };
 }
