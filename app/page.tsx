@@ -27,6 +27,7 @@ import { RelayerQuotaCard } from "@/components/dashboard/RelayerQuotaCard";
 import { CustodyDistributionCard } from "@/components/dashboard/CustodyDistributionCard";
 import { RecentAuditFeed } from "@/components/dashboard/RecentAuditFeed";
 import { QUERY_TIMINGS } from "@/lib/query-config";
+import type { GasFeeMetrics } from "@/lib/chain";
 
 interface MetricsResponse {
   success: boolean;
@@ -67,6 +68,17 @@ interface MetricsResponse {
     formattedInternationalUsd: string;
     activePaidSubscribers: number;
     conversionRatePercent: string;
+    monthlySubscribers?: number;
+    yearlySubscribers?: number;
+  };
+  arr?: {
+    totalUsd: number;
+    formattedTotalUsd: string;
+    domesticNgn: number;
+    formattedDomesticNgn: string;
+    internationalUsd: number;
+    formattedInternationalUsd: string;
+    activePaidSubscribers: number;
   };
   overage?: {
     totalNgn: number;
@@ -81,8 +93,13 @@ interface MetricsResponse {
       merchantCount: number;
       percentage: number;
       monthlyOpsQuota: number;
+      annualOpsQuota?: number;
       priceNgn: number;
       priceUsd: number;
+      priceNgnYearly?: number;
+      priceUsdYearly?: number;
+      monthlyCount?: number;
+      yearlyCount?: number;
     }>;
     payingMerchants: number;
     freeMerchants: number;
@@ -96,8 +113,10 @@ interface MetricsResponse {
     isLowBalance: boolean;
     balanceAvax?: string;
     balanceEtn?: string;
+    balanceUsd?: string;
     unanchoredQueue: number;
     network: "mainnet" | "testnet";
+    gasFee?: GasFeeMetrics;
   };
   incidents: {
     activeCount: number;
@@ -182,9 +201,9 @@ export default function AdminDashboardPage() {
       {/* Page Header & Global Responsive Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span>Executive Pulse</span>
-            <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-mono font-normal">
+            <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-mono font-normal">
               {networkLabel}
             </span>
           </h1>
@@ -194,11 +213,11 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 2x2 Action Grid on Mobile, Flex Inline on Tablet/Desktop */}
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -206,7 +225,7 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/records"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Ledger</span>
@@ -214,12 +233,12 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/incidents"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-2xs transition-colors"
           >
             <AlertOctagon className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
             <span>Incidents</span>
             {(data?.incidents.activeCount || 0) > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-400 text-[10px] font-mono border border-rose-200 dark:border-rose-800">
+              <span className="px-1.5 py-0.2 rounded bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-400 text-[10px] font-mono border border-rose-200 dark:border-rose-800">
                 {data?.incidents.activeCount}
               </span>
             )}
@@ -227,7 +246,7 @@ export default function AdminDashboardPage() {
 
           <Link
             href="/infrastructure"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors shadow-2xs"
+            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition-colors shadow-2xs"
           >
             <Server className="w-3.5 h-3.5" />
             <span>Infra</span>
@@ -419,6 +438,7 @@ export default function AdminDashboardPage() {
         <div className="lg:col-span-7">
           <MonetizationCard
             mrr={data?.mrr}
+            arr={data?.arr}
             overage={data?.overage}
             isLoading={isLoading}
           />
@@ -461,6 +481,7 @@ export default function AdminDashboardPage() {
             unanchoredQueue={data?.relayer.unanchoredQueue || 0}
             isLowBalance={Boolean(data?.relayer.isLowBalance)}
             network={data?.relayer.network}
+            gasFee={data?.relayer.gasFee}
             isLoading={isLoading}
           />
         </div>

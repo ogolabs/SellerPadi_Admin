@@ -9,33 +9,7 @@ import {
   healDriftedAnchors,
 } from "@/lib/ledger-queries";
 import { convertToUsd, convertUsdToNgn, formatMoney } from "@/lib/currency";
-
-const DEFAULT_CURRENCY_MAP: Record<string, string> = {
-  NG: "NGN",
-  US: "USD",
-  GB: "GBP",
-  GH: "GHS",
-  KE: "KES",
-  CA: "CAD",
-  ZA: "ZAR",
-  FR: "EUR",
-  DE: "EUR",
-  AE: "AED",
-  JP: "JPY",
-  CN: "CNY",
-  IN: "INR",
-};
-
-const TIER_PRICING: Record<
-  string,
-  { name: string; ngn: number; usd: number; quota: number }
-> = {
-  free: { name: "Free Tier", ngn: 0, usd: 0, quota: 100 },
-  starter_500: { name: "Starter 500", ngn: 1000, usd: 2.01, quota: 500 },
-  growth_1000: { name: "Growth 1,000", ngn: 2000, usd: 3.03, quota: 1000 },
-  business_2500: { name: "Business 2,500", ngn: 5000, usd: 6.07, quota: 2500 },
-  scale_5000: { name: "Scale 5,000", ngn: 10000, usd: 11.14, quota: 5000 },
-};
+import { TIER_PRICING, DEFAULT_CURRENCY_MAP } from "@/lib/pricing-config";
 
 let regionNames: Intl.DisplayNames | null = null;
 function getCountryName(code: string): string {
@@ -167,8 +141,10 @@ export async function GET() {
         count: number;
         activeSubCount: number;
         totalOverageNgn: number;
-        ngnPaidCount: number;
-        usdPaidCount: number;
+        monthlyNgnPaidCount: number;
+        yearlyNgnPaidCount: number;
+        monthlyUsdPaidCount: number;
+        yearlyUsdPaidCount: number;
       }>([
         {
           $match: {
@@ -193,7 +169,7 @@ export async function GET() {
               },
             },
             totalOverageNgn: { $sum: { $ifNull: ["$overageCharges", 0] } },
-            ngnPaidCount: {
+            monthlyNgnPaidCount: {
               $sum: {
                 $cond: [
                   {
@@ -206,6 +182,8 @@ export async function GET() {
                           { $in: ["$country", ["NG", "Nigeria", null, ""]] },
                         ],
                       },
+                      { $ne: ["$billingInterval", "yearly"] },
+                      { $ne: ["$billingCycle", "yearly"] },
                     ],
                   },
                   1,
@@ -213,7 +191,33 @@ export async function GET() {
                 ],
               },
             },
-            usdPaidCount: {
+            yearlyNgnPaidCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$subscriptionActive", true] },
+                      { $ne: ["$plan", "free"] },
+                      {
+                        $or: [
+                          { $eq: ["$currency", "NGN"] },
+                          { $in: ["$country", ["NG", "Nigeria", null, ""]] },
+                        ],
+                      },
+                      {
+                        $or: [
+                          { $eq: ["$billingInterval", "yearly"] },
+                          { $eq: ["$billingCycle", "yearly"] },
+                        ],
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            monthlyUsdPaidCount: {
               $sum: {
                 $cond: [
                   {
@@ -224,6 +228,34 @@ export async function GET() {
                         $and: [
                           { $ne: ["$currency", "NGN"] },
                           { $not: [{ $in: ["$country", ["NG", "Nigeria", null, ""]] }] },
+                        ],
+                      },
+                      { $ne: ["$billingInterval", "yearly"] },
+                      { $ne: ["$billingCycle", "yearly"] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            yearlyUsdPaidCount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$subscriptionActive", true] },
+                      { $ne: ["$plan", "free"] },
+                      {
+                        $and: [
+                          { $ne: ["$currency", "NGN"] },
+                          { $not: [{ $in: ["$country", ["NG", "Nigeria", null, ""]] }] },
+                        ],
+                      },
+                      {
+                        $or: [
+                          { $eq: ["$billingInterval", "yearly"] },
+                          { $eq: ["$billingCycle", "yearly"] },
                         ],
                       },
                     ],
@@ -463,37 +495,96 @@ export async function GET() {
     const totalVoidedNgnEquiv = convertUsdToNgn(totalVoidedUsd);
 
     // -------------------------------------------------------------
-    // Subscription Plans, MRR & Universal Overage Calculations
+    // Subscription Plans, MRR, ARR & Universal Overage Calculations
     // -------------------------------------------------------------
-    const planCountsMap = new Map<string, { total: number; ngnPaid: number; usdPaid: number; overage: number }>();
+    const planCountsMap = new Map<
+      string,
+      {
+        total: number;
+        ngnPaid: number;
+        usdPaid: number;
+        monthlyPaid: number;
+        yearlyPaid: number;
+        overage: number;
+      }
+    >();
     for (const key of Object.keys(TIER_PRICING)) {
-      planCountsMap.set(key, { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 });
+      planCountsMap.set(key, {
+        total: 0,
+        ngnPaid: 0,
+        usdPaid: 0,
+        monthlyPaid: 0,
+        yearlyPaid: 0,
+        overage: 0,
+      });
     }
 
     let totalOverageNgn = 0;
     let domesticMrrNgn = 0;
+    let domesticArrNgn = 0;
     let internationalMrrUsd = 0;
+    let internationalArrUsd = 0;
     let totalPaidSubscribers = 0;
+    let totalYearlySubscribers = 0;
+    let totalMonthlySubscribers = 0;
 
     for (const p of planStatsAgg) {
       const planKey = (p._id || "free").toLowerCase();
-      const existing = planCountsMap.get(planKey) || { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 };
+      const existing = planCountsMap.get(planKey) || {
+        total: 0,
+        ngnPaid: 0,
+        usdPaid: 0,
+        monthlyPaid: 0,
+        yearlyPaid: 0,
+        overage: 0,
+      };
+      const ngnPaid = (p.monthlyNgnPaidCount || 0) + (p.yearlyNgnPaidCount || 0);
+      const usdPaid = (p.monthlyUsdPaidCount || 0) + (p.yearlyUsdPaidCount || 0);
+      const monthlyPaid = (p.monthlyNgnPaidCount || 0) + (p.monthlyUsdPaidCount || 0);
+      const yearlyPaid = (p.yearlyNgnPaidCount || 0) + (p.yearlyUsdPaidCount || 0);
+
       existing.total += p.count;
-      existing.ngnPaid += p.ngnPaidCount;
-      existing.usdPaid += p.usdPaidCount;
-      existing.overage += p.totalOverageNgn;
+      existing.ngnPaid += ngnPaid;
+      existing.usdPaid += usdPaid;
+      existing.monthlyPaid += monthlyPaid;
+      existing.yearlyPaid += yearlyPaid;
+      existing.overage += p.totalOverageNgn || 0;
       planCountsMap.set(planKey, existing);
 
-      totalOverageNgn += p.totalOverageNgn;
-      totalPaidSubscribers += p.ngnPaidCount + p.usdPaidCount;
+      totalOverageNgn += p.totalOverageNgn || 0;
+      totalPaidSubscribers += ngnPaid + usdPaid;
+      totalMonthlySubscribers += monthlyPaid;
+      totalYearlySubscribers += yearlyPaid;
 
-      const pricing = TIER_PRICING[planKey] || { ngn: 0, usd: 0 };
-      domesticMrrNgn += p.ngnPaidCount * pricing.ngn;
-      internationalMrrUsd += p.usdPaidCount * pricing.usd;
+      const pricing = TIER_PRICING[planKey] || {
+        ngn: 0,
+        usd: 0,
+        ngnYearly: 0,
+        usdYearly: 0,
+      };
+
+      // Monthly MRR & ARR normalized accurately
+      domesticMrrNgn +=
+        (p.monthlyNgnPaidCount || 0) * pricing.ngn +
+        (p.yearlyNgnPaidCount || 0) * (pricing.ngnYearly / 12);
+      domesticArrNgn +=
+        (p.monthlyNgnPaidCount || 0) * (pricing.ngn * 12) +
+        (p.yearlyNgnPaidCount || 0) * pricing.ngnYearly;
+
+      internationalMrrUsd +=
+        (p.monthlyUsdPaidCount || 0) * pricing.usd +
+        (p.yearlyUsdPaidCount || 0) * (pricing.usdYearly / 12);
+      internationalArrUsd +=
+        (p.monthlyUsdPaidCount || 0) * (pricing.usd * 12) +
+        (p.yearlyUsdPaidCount || 0) * pricing.usdYearly;
     }
 
     const domesticMrrUsdEquiv = convertToUsd(domesticMrrNgn, "NGN");
     const totalMrrUsd = internationalMrrUsd + domesticMrrUsdEquiv;
+
+    const domesticArrUsdEquiv = convertToUsd(domesticArrNgn, "NGN");
+    const totalArrUsd = internationalArrUsd + domesticArrUsdEquiv;
+
     const totalOverageUsd = convertToUsd(totalOverageNgn, "NGN");
 
     const totalMerchantsCount = merchantCount || 1;
@@ -509,7 +600,14 @@ export async function GET() {
 
     const planBreakdown = orderedPlanKeys.map((key) => {
       const info = TIER_PRICING[key];
-      const stats = planCountsMap.get(key) || { total: 0, ngnPaid: 0, usdPaid: 0, overage: 0 };
+      const stats = planCountsMap.get(key) || {
+        total: 0,
+        ngnPaid: 0,
+        usdPaid: 0,
+        monthlyPaid: 0,
+        yearlyPaid: 0,
+        overage: 0,
+      };
       const percentage = Math.round((stats.total / totalMerchantsCount) * 100);
       return {
         id: key,
@@ -517,8 +615,13 @@ export async function GET() {
         merchantCount: stats.total,
         percentage,
         monthlyOpsQuota: info.quota,
+        annualOpsQuota: info.annualQuota,
         priceNgn: info.ngn,
         priceUsd: info.usd,
+        priceNgnYearly: info.ngnYearly,
+        priceUsdYearly: info.usdYearly,
+        monthlyCount: stats.monthlyPaid,
+        yearlyCount: stats.yearlyPaid,
       };
     });
 
@@ -546,6 +649,17 @@ export async function GET() {
         formattedInternationalUsd: formatMoney(internationalMrrUsd, "USD"),
         activePaidSubscribers: totalPaidSubscribers,
         conversionRatePercent: paidConversionRate,
+        monthlySubscribers: totalMonthlySubscribers,
+        yearlySubscribers: totalYearlySubscribers,
+      },
+      arr: {
+        totalUsd: totalArrUsd,
+        formattedTotalUsd: formatMoney(totalArrUsd, "USD"),
+        domesticNgn: domesticArrNgn,
+        formattedDomesticNgn: formatMoney(domesticArrNgn, "NGN"),
+        internationalUsd: internationalArrUsd,
+        formattedInternationalUsd: formatMoney(internationalArrUsd, "USD"),
+        activePaidSubscribers: totalPaidSubscribers,
       },
       overage: {
         totalNgn: totalOverageNgn,
@@ -583,6 +697,7 @@ export async function GET() {
         isLowBalance: relayerStatus.isLowBalance,
         balanceAvax: relayerStatus.balanceAvax,
         balanceEtn: relayerStatus.balanceEtn,
+        balanceUsd: relayerStatus.balanceUsd,
         unanchoredQueue: pendingQueueCount,
         pendingQueue: pendingQueueCount,
         pendingReceipts: pendingReceiptCount,
@@ -591,6 +706,7 @@ export async function GET() {
         unanchoredReceipts: unanchoredReceiptCount,
         unanchoredShipments: unanchoredShipmentCount,
         network: relayerStatus.network,
+        gasFee: relayerStatus.gasFee,
       },
       incidents: {
         activeCount: totalActiveIncidents,

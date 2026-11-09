@@ -23,6 +23,8 @@ import {
   Clock,
   History,
   Tag,
+  Briefcase,
+  Bell,
 } from "lucide-react";
 import { QUERY_TIMINGS } from "@/lib/query-config";
 import { formatMoney } from "@/lib/currency";
@@ -32,6 +34,16 @@ import { MerchantQuotaCard, type MerchantQuotaData } from "@/components/merchant
 import { MerchantInventoryTab, type InventoryItem } from "@/components/merchants/MerchantInventoryTab";
 import { MerchantAuditTrailTab, type AuditLogItem } from "@/components/merchants/MerchantAuditTrailTab";
 import { MerchantActivityTabs } from "@/components/merchants/MerchantActivityTabs";
+import {
+  MerchantVendorsTab,
+  type VendorItem,
+  type VendorBillItem,
+} from "@/components/merchants/MerchantVendorsTab";
+import {
+  MerchantReportsTab,
+  type ReportPreferencesData,
+  type ReportsSentData,
+} from "@/components/merchants/MerchantReportsTab";
 
 interface MerchantDetailResponse {
   merchant: {
@@ -49,10 +61,14 @@ interface MerchantDetailResponse {
     plan: string;
     operatingMode: string;
     subscriptionActive: boolean;
+    billingInterval?: "monthly" | "yearly";
     isSuspended: boolean;
     isEmailVerified?: boolean;
     isPhoneVerified?: boolean;
     authProvider?: string | null;
+    reportPreferences?: ReportPreferencesData | null;
+    reportsSent?: ReportsSentData | null;
+    pushSubscriptionsCount?: number;
     authenticators?: Array<{
       providerType: "google" | "email_otp" | "phone";
       providerKey: string;
@@ -81,10 +97,16 @@ interface MerchantDetailResponse {
     };
     branchesCount: number;
     teamCount: number;
+    vendorsCount?: number;
+    accountsPayableDue?: number;
+    unpaidBillsCount?: number;
+    pushSubscriptionsCount?: number;
   };
   quota: MerchantQuotaData;
   inventory: InventoryItem[];
   auditLogs: AuditLogItem[];
+  vendors?: VendorItem[];
+  vendorBills?: VendorBillItem[];
   branches: Array<{
     id: string;
     name: string;
@@ -130,7 +152,15 @@ export default function MerchantDetailPage() {
   const merchantId = params.id as string;
 
   const [activeTab, setActiveTab] = useState<
-    "verification" | "inventory" | "audit" | "branches" | "team" | "receipts" | "shipments"
+    | "verification"
+    | "inventory"
+    | "vendors"
+    | "reports"
+    | "audit"
+    | "branches"
+    | "team"
+    | "receipts"
+    | "shipments"
   >("verification");
   const [suspendModalOpen, setSuspendModalOpen] = useState(false);
 
@@ -237,17 +267,17 @@ export default function MerchantDetailPage() {
               </span>
             ) : isPending ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
-                <Clock className="w-3.5 h-3.5 text-blue-500" />
+                <Clock className="w-3 h-3 text-blue-500" />
                 Under Review
               </span>
             ) : isRejected ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-                <ShieldAlert className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                <ShieldAlert className="w-3 h-3" />
                 KYC Rejected
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
-                <ShieldAlert className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
+                <ShieldAlert className="w-3 h-3" />
                 Unverified
               </span>
             )}
@@ -259,11 +289,11 @@ export default function MerchantDetailPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-800 transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-800 transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             <span>Refresh</span>
@@ -271,7 +301,7 @@ export default function MerchantDetailPage() {
 
           <button
             onClick={() => setSuspendModalOpen(true)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer border shadow-xs active:scale-[0.98] ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer border shadow-xs active:scale-[0.98] ${
               isSuspended
                 ? "bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/80"
                 : "bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800/80"
@@ -441,7 +471,7 @@ export default function MerchantDetailPage() {
       <div className="border-b border-slate-200 dark:border-slate-800 flex items-center gap-1 overflow-x-auto">
         <button
           onClick={() => setActiveTab("verification")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "verification"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -453,7 +483,7 @@ export default function MerchantDetailPage() {
 
         <button
           onClick={() => setActiveTab("inventory")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "inventory"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -464,8 +494,32 @@ export default function MerchantDetailPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab("vendors")}
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === "vendors"
+              ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+          }`}
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          <span>Vendors &amp; AP ({data?.vendors?.length || 0})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+            activeTab === "reports"
+              ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5" />
+          <span>Reports &amp; Alerts</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("audit")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "audit"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -477,7 +531,7 @@ export default function MerchantDetailPage() {
 
         <button
           onClick={() => setActiveTab("branches")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "branches"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -489,7 +543,7 @@ export default function MerchantDetailPage() {
 
         <button
           onClick={() => setActiveTab("team")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "team"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -501,7 +555,7 @@ export default function MerchantDetailPage() {
 
         <button
           onClick={() => setActiveTab("receipts")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "receipts"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -513,7 +567,7 @@ export default function MerchantDetailPage() {
 
         <button
           onClick={() => setActiveTab("shipments")}
-          className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
+          className={`flex items-center gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-xs font-medium border-b-2 transition-colors cursor-pointer shrink-0 ${
             activeTab === "shipments"
               ? "border-blue-600 dark:border-blue-500 text-blue-600 dark:text-white"
               : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -544,6 +598,24 @@ export default function MerchantDetailPage() {
 
         {activeTab === "inventory" && (
           <MerchantInventoryTab inventory={inventory || []} currency={merchant.currency} />
+        )}
+
+        {activeTab === "vendors" && (
+          <MerchantVendorsTab
+            vendors={data?.vendors || []}
+            vendorBills={data?.vendorBills || []}
+            currency={merchant.currency}
+          />
+        )}
+
+        {activeTab === "reports" && (
+          <MerchantReportsTab
+            reportPreferences={merchant.reportPreferences}
+            reportsSent={merchant.reportsSent}
+            pushSubscriptionsCount={merchant.pushSubscriptionsCount ?? stats.pushSubscriptionsCount ?? 0}
+            plan={merchant.plan}
+            businessEmail={merchant.businessEmail}
+          />
         )}
 
         {activeTab === "audit" && (

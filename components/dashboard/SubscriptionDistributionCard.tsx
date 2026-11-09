@@ -8,8 +8,13 @@ export interface PlanTierMetric {
   merchantCount: number;
   percentage: number;
   monthlyOpsQuota: number;
+  annualOpsQuota?: number;
   priceNgn: number;
   priceUsd: number;
+  priceNgnYearly?: number;
+  priceUsdYearly?: number;
+  monthlyCount?: number;
+  yearlyCount?: number;
 }
 
 interface SubscriptionDistributionCardProps {
@@ -118,7 +123,13 @@ export function SubscriptionDistributionCard({
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block">
                       {tier.monthlyOpsQuota.toLocaleString()} ops/mo
+                      {tier.annualOpsQuota ? ` · ${tier.annualOpsQuota.toLocaleString()}/yr` : ""}
                     </span>
+                    {(tier.yearlyCount ?? 0) > 0 && (
+                      <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono block">
+                        {tier.yearlyCount} yearly (5% off)
+                      </span>
+                    )}
                   </div>
                 </div>
 

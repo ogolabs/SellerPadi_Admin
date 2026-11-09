@@ -207,6 +207,31 @@ export interface IUserDoc {
   rolloverQuota?: number;
   overageCharges?: number;
   billingCycle?: "monthly" | "yearly";
+  billingInterval?: "monthly" | "yearly";
+  billingCycleStart?: Date | null;
+  billingCycleEnd?: Date | null;
+  queuedSubscription?: {
+    plan: string;
+    billingInterval: "monthly" | "yearly";
+    operationsLimit: number;
+    startsAt: Date;
+    endsAt: Date;
+  } | null;
+  reportPreferences?: {
+    enabled: boolean;
+    daily: boolean;
+    weekly: boolean;
+    monthly: boolean;
+    yearly: boolean;
+    includeSales: boolean;
+    includeInventory: boolean;
+  } | null;
+  reportsSent?: {
+    lastDailyReport?: Date | null;
+    lastWeeklyReport?: Date | null;
+    lastMonthlyReport?: Date | null;
+    lastYearlyReport?: Date | null;
+  } | null;
   isSuspended?: boolean;
   businessAddress?: string;
   isEmailVerified?: boolean;
@@ -300,6 +325,12 @@ const UserSchema = new Schema<IUserDoc>(
     rolloverQuota: { type: Number, default: 0 },
     overageCharges: { type: Number, default: 0 },
     billingCycle: { type: String, default: "monthly" },
+    billingInterval: { type: String, default: "monthly" },
+    billingCycleStart: { type: Date, default: null },
+    billingCycleEnd: { type: Date, default: null },
+    queuedSubscription: { type: Schema.Types.Mixed, default: null },
+    reportPreferences: { type: Schema.Types.Mixed, default: null },
+    reportsSent: { type: Schema.Types.Mixed, default: null },
     isSuspended: { type: Boolean, default: false },
     businessAddress: { type: String, default: null },
     isEmailVerified: { type: Boolean, default: false },
@@ -478,5 +509,221 @@ const AdminAuditLogSchema = new Schema<IAdminAuditLogDoc>(
 export const AdminAuditLog: Model<IAdminAuditLogDoc> =
   mongoose.models.AdminAuditLog ||
   mongoose.model<IAdminAuditLogDoc>("AdminAuditLog", AdminAuditLogSchema, "admin_audit_logs");
+
+export interface IPushSubscriptionDoc {
+  _id: string;
+  ownerAddress: string;
+  endpoint: string;
+  keys: string;
+  createdAt: Date;
+}
+
+const PushSubscriptionSchema = new Schema<IPushSubscriptionDoc>(
+  {
+    _id: { type: String, required: true },
+    ownerAddress: { type: String, required: true, index: true },
+    endpoint: { type: String, required: true, index: true },
+    keys: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { collection: "pushsubscriptions" }
+);
+
+export const AdminPushSubscription: Model<IPushSubscriptionDoc> =
+  mongoose.models.AdminPushSubscription ||
+  mongoose.model<IPushSubscriptionDoc>("AdminPushSubscription", PushSubscriptionSchema, "pushsubscriptions");
+
+export interface IAdminVendorDoc {
+  _id: string;
+  merchantAddress: string;
+  name: string;
+  companyName?: string | null;
+  phone: string;
+  email?: string | null;
+  address?: string | null;
+  paymentTermsDays?: number;
+  notes?: string | null;
+  totalPurchased: number;
+  totalPaid: number;
+  totalOwed: number;
+  billsCount: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AdminVendorSchema = new Schema<IAdminVendorDoc>(
+  {
+    merchantAddress: { type: String, required: true, lowercase: true, index: true },
+    name: { type: String, required: true, trim: true },
+    companyName: { type: String, default: null, trim: true },
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, default: null, lowercase: true, trim: true },
+    address: { type: String, default: null, trim: true },
+    paymentTermsDays: { type: Number, default: 0, min: 0 },
+    notes: { type: String, default: null },
+    totalPurchased: { type: Number, default: 0, min: 0 },
+    totalPaid: { type: Number, default: 0, min: 0 },
+    totalOwed: { type: Number, default: 0, min: 0 },
+    billsCount: { type: Number, default: 0, min: 0 },
+    isActive: { type: Boolean, default: true, index: true },
+  },
+  { timestamps: true, collection: "vendors" }
+);
+
+export const AdminVendor: Model<IAdminVendorDoc> =
+  mongoose.models.AdminVendor ||
+  mongoose.model<IAdminVendorDoc>("AdminVendor", AdminVendorSchema, "vendors");
+
+export interface IAdminVendorBillDoc {
+  _id: string;
+  billNumber: string;
+  merchantAddress: string;
+  vendorId: string;
+  vendorName: string;
+  branchId?: string | null;
+  branchName?: string | null;
+  items: Array<{
+    productName: string;
+    sku?: string | null;
+    quantity: number;
+    unitCost: number;
+    lineTotal: number;
+    sellingPrice?: number | null;
+  }>;
+  subtotal: number;
+  tax: number;
+  shippingFee: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  status: "unpaid" | "partially_paid" | "paid";
+  issueDate?: Date;
+  billDate?: Date;
+  dueDate?: Date | null;
+  notes?: string | null;
+  paymentHistory?: Array<{
+    paymentId: string;
+    amount: number;
+    paymentDate: Date;
+    paymentMethod: string;
+    reference?: string | null;
+    recordedBy: {
+      address: string;
+      name: string;
+      role?: string | null;
+    };
+    createdAt: Date;
+  }>;
+  payments?: Array<{
+    paymentId: string;
+    amount: number;
+    paymentDate: Date;
+    paymentMethod: string;
+    reference?: string | null;
+    recordedBy: {
+      address: string;
+      name: string;
+      role?: string | null;
+    };
+    createdAt: Date;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AdminVendorBillItemSubSchema = new Schema(
+  {
+    productName: { type: String, required: true },
+    sku: { type: String, default: null },
+    quantity: { type: Number, required: true },
+    unitCost: { type: Number, required: true },
+    lineTotal: { type: Number, required: true },
+    sellingPrice: { type: Number, default: null },
+  },
+  { _id: false }
+);
+
+const AdminVendorBillPaymentSubSchema = new Schema(
+  {
+    paymentId: { type: String, required: true },
+    amount: { type: Number, required: true },
+    paymentDate: { type: Date, default: Date.now },
+    paymentMethod: { type: String, default: "Bank Transfer" },
+    reference: { type: String, default: null },
+    recordedBy: {
+      address: { type: String, required: true },
+      name: { type: String, required: true },
+      role: { type: String, default: null },
+    },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
+const AdminVendorBillSchema = new Schema<IAdminVendorBillDoc>(
+  {
+    billNumber: { type: String, required: true, trim: true, index: true },
+    merchantAddress: { type: String, required: true, lowercase: true, index: true },
+    vendorId: { type: String, required: true, index: true },
+    vendorName: { type: String, required: true, trim: true },
+    branchId: { type: String, default: null, index: true },
+    branchName: { type: String, default: null },
+    items: { type: [AdminVendorBillItemSubSchema], default: [] },
+    subtotal: { type: Number, default: 0 },
+    tax: { type: Number, default: 0 },
+    shippingFee: { type: Number, default: 0 },
+    totalAmount: { type: Number, required: true },
+    amountPaid: { type: Number, default: 0 },
+    balanceDue: { type: Number, required: true },
+    status: { type: String, enum: ["unpaid", "partially_paid", "paid"], default: "unpaid", index: true },
+    issueDate: { type: Date, default: Date.now },
+    billDate: { type: Date, default: Date.now },
+    dueDate: { type: Date, default: null },
+    notes: { type: String, default: null },
+    paymentHistory: { type: [AdminVendorBillPaymentSubSchema], default: [] },
+    payments: { type: [AdminVendorBillPaymentSubSchema], default: [] },
+  },
+  { timestamps: true, collection: "vendorbills" }
+);
+
+export const AdminVendorBill: Model<IAdminVendorBillDoc> =
+  mongoose.models.AdminVendorBill ||
+  mongoose.model<IAdminVendorBillDoc>("AdminVendorBill", AdminVendorBillSchema, "vendorbills");
+
+export interface ISystemConfigDoc {
+  key: string;
+  yearlyDiscountPercent?: number;
+  termiiMinBalanceNgn?: number;
+  relayerMinBalanceNative?: number;
+  diditMinChecksRemaining?: number;
+  alertWebhookUrl?: string | null;
+  alertEmailRecipient?: string | null;
+  lastAlertDispatchedAt?: Date | null;
+  updatedBy?: string | null;
+  updatedAt?: Date;
+  createdAt?: Date;
+}
+
+const AdminSystemConfigSchema = new Schema<ISystemConfigDoc>(
+  {
+    key: { type: String, required: true, unique: true, default: "pricing_config" },
+    yearlyDiscountPercent: { type: Number, default: 5, min: 0, max: 50 },
+    termiiMinBalanceNgn: { type: Number, default: 500, min: 0 },
+    relayerMinBalanceNative: { type: Number, default: 0.5, min: 0 },
+    diditMinChecksRemaining: { type: Number, default: 10, min: 0 },
+    alertWebhookUrl: { type: String, default: null },
+    alertEmailRecipient: { type: String, default: null },
+    lastAlertDispatchedAt: { type: Date, default: null },
+    updatedBy: { type: String, default: null },
+  },
+  { timestamps: true, collection: "systemconfigs", strict: false }
+);
+
+export const AdminSystemConfig: Model<ISystemConfigDoc> =
+  mongoose.models.AdminSystemConfig ||
+  mongoose.model<ISystemConfigDoc>("AdminSystemConfig", AdminSystemConfigSchema, "systemconfigs");
+
+
 
 
