@@ -694,6 +694,9 @@ export const AdminVendorBill: Model<IAdminVendorBillDoc> =
 export interface ISystemConfigDoc {
   key: string;
   yearlyDiscountPercent?: number;
+  maxWaitMinutes?: number;
+  minBatchSize?: number;
+  maxBatchSize?: number;
   termiiMinBalanceNgn?: number;
   relayerMinBalanceNative?: number;
   diditMinChecksRemaining?: number;
@@ -709,6 +712,9 @@ const AdminSystemConfigSchema = new Schema<ISystemConfigDoc>(
   {
     key: { type: String, required: true, unique: true, default: "pricing_config" },
     yearlyDiscountPercent: { type: Number, default: 5, min: 0, max: 50 },
+    maxWaitMinutes: { type: Number, default: 30, min: 1, max: 1440 },
+    minBatchSize: { type: Number, default: 5, min: 1, max: 200 },
+    maxBatchSize: { type: Number, default: 100, min: 1, max: 200 },
     termiiMinBalanceNgn: { type: Number, default: 500, min: 0 },
     relayerMinBalanceNative: { type: Number, default: 0.5, min: 0 },
     diditMinChecksRemaining: { type: Number, default: 10, min: 0 },
@@ -723,6 +729,39 @@ const AdminSystemConfigSchema = new Schema<ISystemConfigDoc>(
 export const AdminSystemConfig: Model<ISystemConfigDoc> =
   mongoose.models.AdminSystemConfig ||
   mongoose.model<ISystemConfigDoc>("AdminSystemConfig", AdminSystemConfigSchema, "systemconfigs");
+
+export interface IAdminBatchRecordDoc {
+  _id: string;
+  batchType: string;
+  merkleRoot: string;
+  recordCount: number;
+  recordIds: string[];
+  relayerAddress: string;
+  onChainTxHash?: string | null;
+  onChainStatus: string;
+  anchoredAt?: Date | null;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+const AdminBatchRecordSchema = new Schema<IAdminBatchRecordDoc>(
+  {
+    _id: { type: String, required: true },
+    batchType: { type: String, required: true },
+    merkleRoot: { type: String, required: true },
+    recordCount: { type: Number, default: 0 },
+    recordIds: { type: [String], default: [] },
+    relayerAddress: { type: String, required: true },
+    onChainTxHash: { type: String, default: null },
+    onChainStatus: { type: String, default: "pending" },
+    anchoredAt: { type: Date, default: null },
+  },
+  { timestamps: true, collection: "batchrecords" }
+);
+
+export const AdminBatchRecord: Model<IAdminBatchRecordDoc> =
+  mongoose.models.AdminBatchRecord ||
+  mongoose.model<IAdminBatchRecordDoc>("AdminBatchRecord", AdminBatchRecordSchema, "batchrecords");
 
 
 
