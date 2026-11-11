@@ -18,6 +18,7 @@ import type { GasFeeMetrics } from "@/lib/chain";
 import { ProviderIntegrationsGrid } from "@/components/infrastructure/ProviderIntegrationsGrid";
 import { PricingConfigCard } from "@/components/infrastructure/PricingConfigCard";
 import { ProviderAlertsCard } from "@/components/infrastructure/ProviderAlertsCard";
+import { BatchConfigCard } from "@/components/infrastructure/BatchConfigCard";
 
 interface TelemetryData {
   status: string;
@@ -385,10 +386,13 @@ export default function InfrastructurePage() {
           {/* Section 3: Provider Guardrails & Alert Settings */}
           <ProviderAlertsCard />
 
-          {/* Section 4: Third-Party Authentication & Communications Telemetry */}
+          {/* Section 4: Merkle Batch Engine Policy & Anchoring Controls */}
+          <BatchConfigCard />
+
+          {/* Section 5: Third-Party Authentication & Communications Telemetry */}
           <ProviderIntegrationsGrid integrations={data?.integrations} />
 
-          {/* Section 5: Host Process & Node Runtime Diagnostics */}
+          {/* Section 6: Host Process & Node Runtime Diagnostics */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-xs">
             <div className="flex items-center gap-2.5 mb-4">
               <Cpu className="w-5 h-5 text-slate-500 dark:text-slate-400" />

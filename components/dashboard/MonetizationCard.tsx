@@ -57,8 +57,8 @@ export function MonetizationCard({
           </p>
         </div>
 
-        <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 font-medium">
-          {conversionRate}% Paid Conversion
+        <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 shrink-0">
+          <strong className="font-semibold">{conversionRate}%</strong> conversion
         </span>
       </div>
 

@@ -78,13 +78,13 @@ export function RelayerQuotaCard({
             <span className="text-slate-500 text-xs"> ({isLowBalance ? "< 0.50 threshold" : "healthy reserve"})</span>
           </div>
           <span
-            className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border ${
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border shrink-0 tracking-tight ${
               isLowBalance
                 ? "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60"
                 : "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
             }`}
           >
-            {isLowBalance ? "Low Fuel Warning" : "Fuel Operational"}
+            {isLowBalance ? "Low Fuel" : "Operational"}
           </span>
         </div>
 
