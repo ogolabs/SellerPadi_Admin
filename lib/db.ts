@@ -176,13 +176,28 @@ export interface IMerchantVerification {
   provider?: "didit" | string | null;
   sessionId?: string | null;
   verifiedAt?: Date | string | null;
+  verificationType?: "kyc" | "kyb" | null;
   documentType?: string | null;
   fullName?: string | null;
   documentNumberMasked?: string | null;
   issuingCountry?: string | null;
   expirationDate?: string | null;
   dateOfBirth?: string | null;
+  businessName?: string | null;
+  registrationNumber?: string | null;
+  jurisdiction?: string | null;
+  companyStatus?: string | null;
   rejectionReason?: string | null;
+  kycHistory?: {
+    verifiedAt?: Date | string | null;
+    documentType?: string | null;
+    fullName?: string | null;
+    documentNumberMasked?: string | null;
+    issuingCountry?: string | null;
+    expirationDate?: string | null;
+    dateOfBirth?: string | null;
+    sessionId?: string | null;
+  } | null;
 }
 
 export interface IUserDoc {
@@ -236,6 +251,7 @@ export interface IUserDoc {
   businessAddress?: string;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
+  businessTierSubscriptionCount?: number;
   verification?: IMerchantVerification | null;
   authProvider?: string | null;
   createdAt: Date;
