@@ -37,6 +37,8 @@ interface MerchantItem {
   subscriptionActive: boolean;
   isSuspended: boolean;
   verificationStatus?: "unverified" | "pending" | "verified" | "rejected";
+  verificationType?: "kyc" | "kyb" | null;
+  businessName?: string | null;
   isVerified?: boolean;
   documentType?: string | null;
   documentNumberMasked?: string | null;
@@ -298,13 +300,17 @@ export default function MerchantsPage() {
                       <div className="flex flex-col gap-1 items-start">
                         {merchant.verificationStatus === "verified" || merchant.isVerified ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                            <ShieldCheck className="w-3 h-3" />
-                            Verified
+                            {merchant.verificationType === "kyb" ? (
+                              <Building2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <ShieldCheck className="w-3 h-3" />
+                            )}
+                            {merchant.verificationType === "kyb" ? "Business Verified (Tier-2)" : "Owner Verified (Tier-1)"}
                           </span>
                         ) : merchant.verificationStatus === "pending" ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
                             <Clock className="w-3 h-3 text-blue-500" />
-                            Under Review
+                            {merchant.verificationType === "kyb" ? "KYB Review" : "Under Review"}
                           </span>
                         ) : merchant.verificationStatus === "rejected" ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
@@ -317,11 +323,15 @@ export default function MerchantsPage() {
                           </span>
                         )}
 
-                        {merchant.documentNumberMasked && (
+                        {merchant.verificationType === "kyb" && merchant.businessName ? (
+                          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-32">
+                            {merchant.businessName}
+                          </span>
+                        ) : merchant.documentNumberMasked ? (
                           <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-30">
                             {merchant.documentNumberMasked}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </td>
 

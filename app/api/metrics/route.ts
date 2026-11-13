@@ -353,8 +353,8 @@ export async function GET() {
     const pendingQueueCount = pendingReceiptCount + pendingShipmentCount;
     const unanchoredCount = unanchoredReceiptCount + unanchoredShipmentCount;
     const relayerBalanceNum = parseFloat(relayerStatus.balanceAvax || relayerStatus.balanceEtn || "0");
-    const relayerGasIncident = relayerBalanceNum < 0.5 ? 1 : 0;
-    const totalActiveIncidents = pendingQueueCount + activeDisputesCount + relayerGasIncident;
+    const relayerGasIncident = relayerBalanceNum < 0.1 ? 1 : 0;
+    const totalActiveIncidents = unanchoredCount + activeDisputesCount + relayerGasIncident;
 
     // Format 7-Day Continuous Time Series
     const dailyReceiptsMap = new Map<string, { count: number; gmvUsd: number; gmvNgn: number }>();
