@@ -160,6 +160,11 @@ export async function GET(req: NextRequest) {
         subscriptionActive: Boolean(u.subscriptionActive),
         isSuspended: Boolean(u.isSuspended),
         verificationStatus: u.verification?.status || "unverified",
+        verificationType:
+          u.verification?.verificationType ||
+          (isIdentityVerified && u.verification?.businessName ? "kyb" : isIdentityVerified ? "kyc" : null),
+        businessName: u.verification?.businessName || null,
+        registrationNumber: u.verification?.registrationNumber || null,
         isVerified: isIdentityVerified,
         documentType: u.verification?.documentType || null,
         documentNumberMasked: u.verification?.documentNumberMasked || null,
