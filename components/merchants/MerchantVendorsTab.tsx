@@ -9,6 +9,7 @@ import {
   Phone,
   Mail,
   FileText,
+  Archive,
 } from "lucide-react";
 import { formatMoney } from "@/lib/currency";
 
@@ -41,6 +42,13 @@ export interface VendorBillItem {
   amountPaid: number;
   balanceDue: number;
   status: "unpaid" | "partially_paid" | "paid";
+  isArchived?: boolean;
+  archivedAt?: string | null;
+  archivedBy?: {
+    address: string;
+    name: string;
+    role?: string | null;
+  } | null;
   billDate?: string;
   issueDate?: string;
   dueDate?: string | null;
@@ -68,8 +76,10 @@ export function MerchantVendorsTab({
 }: MerchantVendorsTabProps) {
   const [subTab, setSubTab] = useState<"bills" | "vendors">("bills");
 
-  const totalPayableDue = vendorBills.reduce((acc, b) => acc + (b.balanceDue || 0), 0);
-  const unpaidBillsCount = vendorBills.filter((b) => b.status !== "paid").length;
+  const totalPayableDue = vendorBills
+    .filter((b) => !b.isArchived)
+    .reduce((acc, b) => acc + (b.balanceDue || 0), 0);
+  const unpaidBillsCount = vendorBills.filter((b) => !b.isArchived && b.status !== "paid").length;
 
   return (
     <div className="space-y-5">
@@ -174,7 +184,12 @@ export function MerchantVendorsTab({
                     const isPaid = b.status === "paid";
                     const isPartial = b.status === "partially_paid";
                     return (
-                      <tr key={b.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <tr
+                        key={b.id}
+                        className={`hover:bg-slate-50/50 dark:hover:bg-slate-800/40 ${
+                          b.isArchived ? "opacity-60 bg-slate-50/30 dark:bg-slate-900/30" : ""
+                        }`}
+                      >
                         <td className="py-2.5 px-3 font-mono font-medium text-slate-900 dark:text-white">
                           {b.billNumber}
                         </td>
@@ -182,25 +197,35 @@ export function MerchantVendorsTab({
                           {b.vendorName}
                         </td>
                         <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">
-                          {b.branchName || "HQ / Main Store"}
+                          {b.branchName || "Main Store"}
                         </td>
                         <td className="py-2.5 px-3">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
-                              isPaid
-                                ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
-                                : isPartial
-                                ? "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60"
-                                : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60"
-                            }`}
-                          >
-                            {isPaid ? (
-                              <CheckCircle2 className="w-3 h-3" />
-                            ) : (
-                              <Clock className="w-3 h-3" />
-                            )}
-                            <span className="capitalize">{b.status.replace("_", " ")}</span>
-                          </span>
+                          {b.isArchived ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700"
+                              title={b.archivedBy?.name ? `Archived by ${b.archivedBy.name}` : undefined}
+                            >
+                              <Archive className="w-3 h-3" />
+                              <span>Archived</span>
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
+                                isPaid
+                                  ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
+                                  : isPartial
+                                  ? "bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60"
+                                  : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60"
+                              }`}
+                            >
+                              {isPaid ? (
+                                <CheckCircle2 className="w-3 h-3" />
+                              ) : (
+                                <Clock className="w-3 h-3" />
+                              )}
+                              <span className="capitalize">{b.status.replace("_", " ")}</span>
+                            </span>
+                          )}
                         </td>
                         <td className="py-2.5 px-3 font-mono text-right text-slate-800 dark:text-slate-200">
                           {formatMoney(b.totalAmount, currency)}
