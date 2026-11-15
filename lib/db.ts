@@ -614,6 +614,13 @@ export interface IAdminVendorBillDoc {
   amountPaid: number;
   balanceDue: number;
   status: "unpaid" | "partially_paid" | "paid";
+  isArchived?: boolean;
+  archivedAt?: Date | null;
+  archivedBy?: {
+    address: string;
+    name: string;
+    role?: string | null;
+  } | null;
   issueDate?: Date;
   billDate?: Date;
   dueDate?: Date | null;
@@ -693,6 +700,13 @@ const AdminVendorBillSchema = new Schema<IAdminVendorBillDoc>(
     amountPaid: { type: Number, default: 0 },
     balanceDue: { type: Number, required: true },
     status: { type: String, enum: ["unpaid", "partially_paid", "paid"], default: "unpaid", index: true },
+    isArchived: { type: Boolean, default: false, index: true },
+    archivedAt: { type: Date, default: null },
+    archivedBy: {
+      address: { type: String, default: null },
+      name: { type: String, default: null },
+      role: { type: String, default: null },
+    },
     issueDate: { type: Date, default: Date.now },
     billDate: { type: Date, default: Date.now },
     dueDate: { type: Date, default: null },
