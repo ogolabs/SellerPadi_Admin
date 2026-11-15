@@ -170,7 +170,7 @@ export function ReceiptDetailModal({ record, onClose }: ReceiptDetailModalProps)
               <span>Counter Branch &amp; Issuer</span>
             </div>
             <div className="font-semibold text-slate-900 dark:text-white truncate">
-              {r?.branchName || "Main Counter / HQ"}
+              {r?.branchName || "Main Store"}
             </div>
             <div className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
               Issued by:{" "}

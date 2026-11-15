@@ -146,7 +146,7 @@ export async function GET(
       AdminVendor.find({ merchantAddress }).sort({ createdAt: -1 }).limit(50).lean(),
       AdminVendorBill.find({ merchantAddress }).sort({ createdAt: -1 }).limit(30).lean(),
       AdminVendorBill.aggregate<{ _id: null; totalBalanceDue: number; unpaidCount: number }>([
-        { $match: { merchantAddress, status: { $in: ["unpaid", "partially_paid"] } } },
+        { $match: { merchantAddress, status: { $in: ["unpaid", "partially_paid"] }, isArchived: { $ne: true } } },
         { $group: { _id: null, totalBalanceDue: { $sum: "$balanceDue" }, unpaidCount: { $sum: 1 } } },
       ]),
     ]);
@@ -341,6 +341,9 @@ export async function GET(
           amountPaid: b.amountPaid,
           balanceDue: b.balanceDue,
           status: b.status,
+          isArchived: Boolean(b.isArchived),
+          archivedAt: b.archivedAt ? new Date(b.archivedAt).toISOString() : null,
+          archivedBy: b.archivedBy || null,
           billDate: validDate,
           issueDate: validDate,
           dueDate: b.dueDate ? new Date(b.dueDate).toISOString() : null,
