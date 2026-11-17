@@ -224,13 +224,13 @@ export default function IncidentsPage() {
       </div>
 
       {/* Relayer Fuel Health Alert Banner */}
-      {!isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.1 ? (
+      {!isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 5.0 ? (
         <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200 text-xs flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             <span>
               <strong className="text-rose-950 dark:text-white">CRITICAL RELAYER FUEL:</strong> Current balance is{" "}
-              <strong className="font-mono text-rose-950 dark:text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.10 AVAX threshold).
+              <strong className="font-mono text-rose-950 dark:text-white">{summary.relayerGas} ETN</strong> (&lt; 5.00 ETN threshold).
               Risk of immediate transaction revert!
             </span>
           </div>
@@ -241,13 +241,13 @@ export default function IncidentsPage() {
             Inspect Infrastructure
           </Link>
         </div>
-      ) : !isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 0.5 ? (
+      ) : !isLoading && data && Number.isFinite(relayerGasNum) && relayerGasNum < 20.0 ? (
         <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-slate-900/80 border border-blue-200 dark:border-blue-900/60 text-slate-700 dark:text-slate-300 text-xs flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <span>
               <strong className="text-slate-900 dark:text-white">Relayer Fuel Warning:</strong> Current balance is{" "}
-              <strong className="font-mono text-slate-900 dark:text-white">{summary.relayerGas} AVAX</strong> (&lt; 0.50 AVAX threshold).
+              <strong className="font-mono text-slate-900 dark:text-white">{summary.relayerGas} ETN</strong> (&lt; 20.00 ETN threshold).
               Fuel top-up advised to maintain smooth transaction throughput.
             </span>
           </div>
@@ -311,7 +311,7 @@ export default function IncidentsPage() {
         {isLoading ? (
           <div className="p-12 text-center text-slate-500 dark:text-slate-400 space-y-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-500" />
-            <p className="text-xs">Evaluating incident telemetry from MongoDB &amp; Avalanche C-Chain node...</p>
+            <p className="text-xs">Evaluating incident telemetry from MongoDB &amp; Electroneum Smart Chain node...</p>
           </div>
         ) : filteredIncidents.length === 0 ? (
           <div className="p-12 text-center space-y-3 bg-white dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">

@@ -16,6 +16,7 @@ import {
   Building2,
 } from "lucide-react";
 import { UnifiedRecordItem } from "@/app/api/records/route";
+import { getBlockExplorerTxUrl } from "@/lib/chain";
 
 interface ReceiptDetailModalProps {
   record: UnifiedRecordItem | null;
@@ -52,7 +53,7 @@ export function ReceiptDetailModal({ record, onClose }: ReceiptDetailModalProps)
   };
 
   const explorerUrl = r?.onChainTxHash?.startsWith("0x")
-    ? `https://subnets-test.avax.network/c-chain/tx/${r.onChainTxHash}`
+    ? getBlockExplorerTxUrl(r.onChainTxHash)
     : null;
 
   return (
@@ -328,7 +329,7 @@ export function ReceiptDetailModal({ record, onClose }: ReceiptDetailModalProps)
 
             {explorerUrl && r?.onChainTxHash && (
               <div className="flex items-center justify-between gap-2 pt-1">
-                <span className="text-slate-500 shrink-0">Avalanche C-Chain Ref:</span>
+                <span className="text-slate-500 shrink-0">Electroneum Smart Chain Ref:</span>
                 <a
                   href={explorerUrl}
                   target="_blank"

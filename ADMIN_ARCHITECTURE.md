@@ -21,7 +21,7 @@ SellerPadi operates as an npm monorepo with dedicated workspaces for specific do
 │             └─────────────────────────┬───────────────────────────────┘                │
 │                                       ▼                                                │
 │                        SHARED CORE DATA & INFRASTRUCTURE                               │
-│         MongoDB Atlas · Avalanche C-Chain · Paystack / Stripe · Termii / Zepto         │
+│      MongoDB Atlas · Electroneum Smart Chain · Paystack / Stripe · Termii / Zepto       │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,11 +87,11 @@ Provides deep operational diagnostics for the underlying databases, blockchain r
 - **Query Latencies**: Real-time monitoring of average read/write durations.
 - **Index Health**: Detection of unindexed queries, collection scans (`COLLSCAN`), or indexing bottlenecks.
 
-#### 2. Avalanche C-Chain Relayer & Ledger Engine
+#### 2. Electroneum Smart Chain Relayer & Ledger Engine
 
 - **Relayer Wallet Monitor**:
-  - Live AVAX gas balance of `relayerAccount`.
-  - Automated threshold alerts when AVAX balance drops below minimum reserves (e.g., `< 0.5 AVAX`).
+  - Live ETN gas balance of `relayerAccount`.
+  - Automated threshold alerts when ETN balance drops below minimum reserves (e.g., `< 5 ETN`).
 - **Nonce Synchronization State**:
   - Comparison of current EVM account nonce (`getTransactionCount`) vs. contract witness nonce (`userNonces`).
 - **Unanchored Queue Depth**:
@@ -101,7 +101,7 @@ Provides deep operational diagnostics for the underlying databases, blockchain r
   - Manual on-demand trigger to force an immediate ledger sweep.
   - Execution history log displaying processed, anchored, and failed counts.
 - **RPC Benchmark**:
-  - Latency and uptime monitoring across primary and fallback RPC endpoints (Official Avalanche vs. Public RPCs).
+  - Latency and uptime monitoring across primary and fallback RPC endpoints (Ankr Electroneum vs. Official RPCs).
 
 #### 3. Third-Party Integration Telemetry
 
@@ -146,7 +146,7 @@ Centralized search and audit viewer across every transaction processed on the Se
   - Itemized product line items with unit prices and totals.
   - Payment method (Cash, Bank Transfer, POS/Card, Credit) and settlement history for credit sales.
   - Permanent actor snapshots: `{ issuedBy, settledBy, voidedBy }`.
-  - Cryptographic verification seal and Avalanche C-Chain block explorer link (Snowtrace).
+  - Cryptographic verification seal and Electroneum Smart Chain block explorer link (Blockscout).
 
 #### 2. Universal Package & Dispatch Registry (`/records/shipments`)
 

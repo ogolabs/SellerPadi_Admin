@@ -352,8 +352,8 @@ export async function GET() {
     // Evaluate live queue & incident counts
     const pendingQueueCount = pendingReceiptCount + pendingShipmentCount;
     const unanchoredCount = unanchoredReceiptCount + unanchoredShipmentCount;
-    const relayerBalanceNum = parseFloat(relayerStatus.balanceAvax || relayerStatus.balanceEtn || "0");
-    const relayerGasIncident = relayerBalanceNum < 0.1 ? 1 : 0;
+    const relayerBalanceNum = parseFloat(relayerStatus.balanceEtn || relayerStatus.balanceAvax || "0");
+    const relayerGasIncident = relayerBalanceNum < 5.0 ? 1 : 0;
     const totalActiveIncidents = unanchoredCount + activeDisputesCount + relayerGasIncident;
 
     // Format 7-Day Continuous Time Series

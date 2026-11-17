@@ -18,6 +18,7 @@ import {
   Clock,
 } from "lucide-react";
 import { UnifiedRecordItem } from "@/app/api/records/route";
+import { getBlockExplorerTxUrl } from "@/lib/chain";
 
 interface ShipmentDetailModalProps {
   record: UnifiedRecordItem | null;
@@ -71,7 +72,7 @@ export function ShipmentDetailModal({ record, onClose }: ShipmentDetailModalProp
   };
 
   const explorerUrl = s?.onChainTxHash?.startsWith("0x")
-    ? `https://subnets-test.avax.network/c-chain/tx/${s.onChainTxHash}`
+    ? getBlockExplorerTxUrl(s.onChainTxHash)
     : null;
 
   const trackingCode = s?.trackingCode || record.id;
@@ -334,7 +335,7 @@ export function ShipmentDetailModal({ record, onClose }: ShipmentDetailModalProp
 
             {explorerUrl && s?.onChainTxHash && (
               <div className="flex items-center justify-between gap-2 pt-1">
-                <span className="text-slate-500 shrink-0">Avalanche C-Chain Ref:</span>
+                <span className="text-slate-500 shrink-0">Electroneum Smart Chain Ref:</span>
                 <a
                   href={explorerUrl}
                   target="_blank"

@@ -126,7 +126,7 @@ export function RecentAuditFeed({ events = [], isLoading = false }: RecentAuditF
 
       <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
         <span>Continuous Real-Time Ingestion</span>
-        <span className="text-slate-600 dark:text-slate-400 font-mono">MongoDB + Avalanche C-Chain</span>
+        <span className="text-slate-600 dark:text-slate-400 font-mono">MongoDB + Electroneum Smart Chain</span>
       </div>
     </Card>
   );

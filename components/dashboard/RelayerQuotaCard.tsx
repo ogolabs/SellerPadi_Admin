@@ -29,7 +29,7 @@ export function RelayerQuotaCard({
 }: RelayerQuotaCardProps) {
   const currentBalance = balanceAvax ?? balanceEtn ?? "0";
   const balanceNum = parseFloat(currentBalance);
-  const targetBuffer = 1.0; // 1.0 AVAX target reserve buffer
+  const targetBuffer = 100.0; // 100.0 ETN target reserve buffer
   const fuelPercentage = Math.min(100, Math.round((balanceNum / targetBuffer) * 100));
 
   const shortenAddress = (addr: string) => {
@@ -38,7 +38,7 @@ export function RelayerQuotaCard({
   };
 
   const isMainnet = network.toLowerCase() === "mainnet";
-  const symbol = gasFee?.currencySymbol || "AVAX";
+  const symbol = gasFee?.currencySymbol || "ETN";
 
   return (
     <Card className="p-5 flex flex-col justify-between space-y-4">
@@ -49,7 +49,7 @@ export function RelayerQuotaCard({
             <span>Relayer Fuel &amp; Gas Economics</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real-time gas fees per smart contract interaction on {isMainnet ? "AVAX Mainnet" : "Fuji Testnet"}.
+            Real-time gas fees per smart contract interaction on {isMainnet ? "ETN Mainnet" : "ETN Testnet"}.
           </p>
         </div>
 
@@ -70,12 +70,12 @@ export function RelayerQuotaCard({
             <span className="text-slate-900 dark:text-white font-bold font-mono text-base">
               {isLoading ? "..." : `${balanceNum.toFixed(4)} ${symbol}`}
             </span>{" "}
-            {gasFee?.avaxPriceUsd ? (
+            {(gasFee?.etnPriceUsd ?? gasFee?.avaxPriceUsd) ? (
               <span className="text-slate-500 font-mono text-xs">
-                (~${(balanceNum * gasFee.avaxPriceUsd).toFixed(2)} USD)
+                (~${(balanceNum * (gasFee.etnPriceUsd ?? gasFee.avaxPriceUsd)).toFixed(2)} USD)
               </span>
             ) : null}
-            <span className="text-slate-500 text-xs"> ({isLowBalance ? "< 0.50 threshold" : "healthy reserve"})</span>
+            <span className="text-slate-500 text-xs"> ({isLowBalance ? "< 20 ETN threshold" : "healthy reserve"})</span>
           </div>
           <span
             className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border shrink-0 tracking-tight ${
@@ -104,7 +104,7 @@ export function RelayerQuotaCard({
           <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/60 rounded-lg p-2.5">
             <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Active Network</span>
             <span className="text-slate-900 dark:text-white font-mono font-medium mt-0.5 block truncate">
-              {isMainnet ? "AVAX Mainnet" : "Fuji Testnet"}
+              {isMainnet ? "ETN Mainnet" : "ETN Testnet"}
             </span>
           </div>
 
@@ -114,14 +114,14 @@ export function RelayerQuotaCard({
                 <Fuel className="w-3 h-3 text-blue-500" />
                 <span>Base Gas</span>
               </span>
-              {gasFee?.avaxPriceUsd ? (
+              {(gasFee?.etnPriceUsd ?? gasFee?.avaxPriceUsd) ? (
                 <span className="font-mono text-[9px] text-slate-400 dark:text-slate-500">
-                  ${gasFee.avaxPriceUsd.toFixed(2)}
+                  ${(gasFee.etnPriceUsd ?? gasFee.avaxPriceUsd).toFixed(4)}
                 </span>
               ) : null}
             </div>
             <span className="text-slate-900 dark:text-white font-mono font-bold mt-0.5 block truncate">
-              {isLoading ? "..." : `${gasFee?.gasPriceGwei || "25.00"} Gwei`}
+              {isLoading ? "..." : `${gasFee?.gasPriceGwei || "2.00"} Gwei`}
             </span>
           </div>
 
