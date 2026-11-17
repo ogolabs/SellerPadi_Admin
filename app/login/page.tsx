@@ -360,7 +360,7 @@ export default function AdminLoginPage() {
 
         <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 text-center">
           <p className="text-[11px] text-slate-500">
-            SellerPadi Infrastructure &copy; {new Date().getFullYear()} &bull; Avalanche C-Chain Network
+            SellerPadi Infrastructure &copy; {new Date().getFullYear()} &bull; Electroneum Smart Chain Network
           </p>
         </div>
       </div>

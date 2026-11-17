@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
 
   const weeklyGmvUsd = data?.dailyActivity?.reduce((acc, d) => acc + (d.gmvUsd || 0), 0) || 0;
   const isMainnet = data?.relayer?.network === "mainnet";
-  const networkLabel = isMainnet ? "AVAX Mainnet" : "Fuji Testnet";
+  const networkLabel = isMainnet ? "ETN Mainnet" : "ETN Testnet";
 
   const currencyBreakdown = Object.values(data?.gmv.byCurrency || {})
     .filter((c) => c.total > 0)
@@ -400,10 +400,10 @@ export default function AdminDashboardPage() {
             </div>
             <div className="min-w-0">
               <div className="text-xs font-semibold text-slate-900 dark:text-white font-mono truncate">
-                {parseFloat(data?.relayer.balanceAvax ?? data?.relayer.balanceEtn ?? "0").toFixed(4)} AVAX
+                {parseFloat(data?.relayer.balanceEtn ?? data?.relayer.balanceAvax ?? "0").toFixed(4)} ETN
               </div>
               <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                {data?.relayer.isLowBalance ? "Low fuel notice (< 0.5 AVAX)" : "Fuel reserve healthy"}
+                {data?.relayer.isLowBalance ? "Low fuel notice (< 20 ETN)" : "Fuel reserve healthy"}
               </div>
             </div>
           </div>
@@ -515,7 +515,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span className="leading-relaxed">
-            SellerPadi Institutional Ledger &bull; Avalanche C-Chain SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
+            SellerPadi Institutional Ledger &bull; Electroneum Smart Chain SHA-256 Immutable Proofs &bull; Off-Chain PII Zero-Storage Policy
           </span>
         </div>
         <div className="font-mono text-[11px] text-slate-500 shrink-0">

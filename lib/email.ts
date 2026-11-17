@@ -142,7 +142,7 @@ export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<
     <tr>
       <td style="padding-top: 24px; border-top: 1px solid #1E293B; text-align: center;">
         <p style="margin: 0; font-size: 11px; color: #64748B;">
-          SellerPadi Infrastructure &bull; Avalanche C-Chain Network
+          SellerPadi Infrastructure &bull; Electroneum Smart Chain Network
         </p>
       </td>
     </tr>
