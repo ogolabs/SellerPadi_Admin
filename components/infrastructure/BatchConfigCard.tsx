@@ -23,7 +23,8 @@ interface BatchConfigResponse {
     gasUnits: number;
     costNative: string;
     costUsd: string;
-    avaxPriceUsd: number;
+    etnPriceUsd?: number;
+    avaxPriceUsd?: number;
   };
   lastTxActual?: {
     txHash: string;
@@ -114,7 +115,7 @@ export function BatchConfigCard() {
                 Merkle Batch Engine Policy
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Avalanche C-Chain
+                Electroneum Smart Chain
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -244,9 +245,9 @@ export function BatchConfigCard() {
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
               <span>
-                Universal Merkle tree provides <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">99.2% gas reduction</strong> on Avalanche C-Chain (~68k gas per batch &bull;{" "}
+                Universal Merkle tree provides <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">99.2% gas reduction</strong> on Electroneum Smart Chain (~68k gas per batch &bull;{" "}
                 <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">{data?.estimatedBatchCost?.costUsd || "~$0.04 USD"}</strong> /{" "}
-                <span className="font-mono text-slate-500 dark:text-slate-400">{data?.estimatedBatchCost?.costNative || "~0.0017 AVAX"}</span>).
+                <span className="font-mono text-slate-500 dark:text-slate-400">{data?.estimatedBatchCost?.costNative || "~0.0017 ETN"}</span>).
               </span>
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 shrink-0">

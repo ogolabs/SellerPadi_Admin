@@ -111,7 +111,7 @@ export default function InfrastructurePage() {
             <span>Infrastructure &amp; Telemetry</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Real-time diagnostics for MongoDB Atlas, Avalanche C-Chain Relayer, and connected provider APIs.
+            Real-time diagnostics for MongoDB Atlas, Electroneum Smart Chain Relayer, and connected provider APIs.
           </p>
         </div>
 
@@ -220,7 +220,7 @@ export default function InfrastructurePage() {
                 </div>
               </div>
 
-              {/* Card 2: Avalanche C-Chain Relayer Wallet */}
+              {/* Card 2: Electroneum Relayer Wallet */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 flex flex-col justify-between shadow-xs">
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -229,24 +229,24 @@ export default function InfrastructurePage() {
                         <Radio className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Avalanche Relayer</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Electroneum Relayer</h3>
                         <span className="text-[11px] text-slate-500 dark:text-slate-400">Audit Witness &amp; Gas Tank</span>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 uppercase">
-                      {data?.relayer.network === "mainnet" ? "AVAX Mainnet" : "Fuji Testnet"}
+                      {data?.relayer.network === "mainnet" ? "ETN Mainnet" : "ETN Testnet"}
                     </span>
                   </div>
 
                   <div className="space-y-3 pt-2">
                     <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">AVAX Gas Balance</span>
+                      <span className="text-slate-500 dark:text-slate-400">ETN Gas Balance</span>
                       <span
                         className={`font-mono font-medium ${
                           data?.relayer.isLowBalance ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
                         }`}
                       >
-                        {data?.relayer.balanceAvax ?? data?.relayer.balanceEtn} AVAX
+                        {data?.relayer.balanceEtn ?? data?.relayer.balanceAvax} ETN
                         {data?.relayer.balanceUsd && (
                           <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
                             (~${data.relayer.balanceUsd} USD)
@@ -275,10 +275,10 @@ export default function InfrastructurePage() {
                     <div className="flex justify-between items-center text-xs pb-2 border-b border-slate-100 dark:border-slate-800/60">
                       <span className="text-slate-500 dark:text-slate-400">Gas Price (Base)</span>
                       <span className="text-slate-900 dark:text-slate-200 font-mono font-bold">
-                        {data?.relayer.gasFee?.gasPriceGwei || "25.00"} Gwei
-                        {data?.relayer.gasFee?.avaxPriceUsd ? (
+                        {data?.relayer.gasFee?.gasPriceGwei || "2.00"} Gwei
+                        {(data?.relayer.gasFee?.etnPriceUsd ?? data?.relayer.gasFee?.avaxPriceUsd) ? (
                           <span className="text-slate-400 dark:text-slate-500 font-normal text-[11px] ml-1.5">
-                            (AVAX: ${data.relayer.gasFee.avaxPriceUsd.toFixed(2)})
+                            ({data?.relayer.gasFee?.currencySymbol || "ETN"}: ${(data.relayer.gasFee.etnPriceUsd ?? data.relayer.gasFee.avaxPriceUsd).toFixed(4)})
                           </span>
                         ) : null}
                       </span>
@@ -286,7 +286,7 @@ export default function InfrastructurePage() {
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-500 dark:text-slate-400">Avg Gas / Tx</span>
                       <span className="text-slate-900 dark:text-slate-200 font-mono font-medium">
-                        ~{data?.relayer.gasFee?.avgFeeNative || "0.00225"} {data?.relayer.gasFee?.currencySymbol || "AVAX"}
+                        ~{data?.relayer.gasFee?.avgFeeNative || "0.00018"} {data?.relayer.gasFee?.currencySymbol || "ETN"}
                         <span className="text-blue-600 dark:text-blue-400 font-semibold ml-1.5">
                           ({data?.relayer.gasFee?.avgFeeUsd || "< $0.0001"})
                         </span>

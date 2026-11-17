@@ -4,7 +4,7 @@ import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from "@/lib/auth";
 import { connectAdminDb, AdminSystemConfig, AdminBatchRecord, AdminReceipt } from "@/lib/db";
 import {
   getPublicClient,
-  getAvaxUsdPrice,
+  getEtnUsdPrice,
   isRealTxHash,
   getBlockExplorerTxUrl,
   activeChain,
@@ -31,32 +31,31 @@ export async function GET() {
 
     await connectAdminDb();
 
-    const [config, avaxPriceUsd, rawGasPrice] = await Promise.all([
+    const [config, etnPriceUsd, rawGasPrice] = await Promise.all([
       AdminSystemConfig.findOne({ key: "batch_config" }).lean(),
-      getAvaxUsdPrice().catch(() => 25.0),
+      getEtnUsdPrice().catch(() => 0.0022),
       getPublicClient()
         .getGasPrice()
-        .catch(() => BigInt(25000000000)),
+        .catch(() => BigInt(2000000000)),
     ]);
 
-    const symbol = activeChain.nativeCurrency?.symbol || "AVAX";
+    const symbol = activeChain.nativeCurrency?.symbol || "ETN";
 
-    // Avalanche C-Chain standard base fee floor is 25 Gwei (25,000,000,000 wei)
-    // On Fuji testnet, idle RPC nodes report tiny gasPrice (e.g. 159 wei).
-    // For realistic operational cost estimation on Avalanche C-Chain, apply the standard 25 Gwei floor.
-    const AVALANCHE_STANDARD_BASE_FEE = BigInt(25_000_000_000);
-    const effectiveEstimateGasPrice = rawGasPrice > AVALANCHE_STANDARD_BASE_FEE ? rawGasPrice : AVALANCHE_STANDARD_BASE_FEE;
+    // Electroneum Smart Chain standard base fee floor is ~2 Gwei (2,000,000,000 wei)
+    const ELECTRONEUM_STANDARD_BASE_FEE = BigInt(2_000_000_000);
+    const effectiveEstimateGasPrice = rawGasPrice > ELECTRONEUM_STANDARD_BASE_FEE ? rawGasPrice : ELECTRONEUM_STANDARD_BASE_FEE;
 
     // Estimate cost for standard ~68,000 gas Merkle tree anchor
     const estGasUnits = 68000;
-    const estFeeAvaxNum = Number(formatEther(BigInt(estGasUnits) * effectiveEstimateGasPrice));
-    const estFeeUsdNum = estFeeAvaxNum * avaxPriceUsd;
+    const estFeeEtnNum = Number(formatEther(BigInt(estGasUnits) * effectiveEstimateGasPrice));
+    const estFeeUsdNum = estFeeEtnNum * etnPriceUsd;
 
     const estimatedBatchCost = {
       gasUnits: estGasUnits,
-      costNative: `~${estFeeAvaxNum.toFixed(4)} ${symbol}`,
-      costUsd: `~$${estFeeUsdNum.toFixed(2)} USD`,
-      avaxPriceUsd,
+      costNative: `~${estFeeEtnNum.toFixed(4)} ${symbol}`,
+      costUsd: `~$${estFeeUsdNum.toFixed(4)} USD`,
+      etnPriceUsd,
+      avaxPriceUsd: etnPriceUsd,
     };
 
     // Find the latest anchored batch transaction
@@ -113,12 +112,12 @@ export async function GET() {
         const txReceipt = await client.getTransactionReceipt({ hash: latestTxHash });
         if (txReceipt) {
           const effectivePrice = txReceipt.effectiveGasPrice || rawGasPrice;
-          const actualFeeAvaxNum = Number(formatEther(txReceipt.gasUsed * effectivePrice));
-          const actualFeeUsdNum = actualFeeAvaxNum * avaxPriceUsd;
+          const actualFeeEtnNum = Number(formatEther(txReceipt.gasUsed * effectivePrice));
+          const actualFeeUsdNum = actualFeeEtnNum * etnPriceUsd;
 
           // Mainnet baseline equivalent for testnet transactions
-          const mainnetFeeAvaxNum = Number(formatEther(txReceipt.gasUsed * AVALANCHE_STANDARD_BASE_FEE));
-          const mainnetFeeUsdNum = mainnetFeeAvaxNum * avaxPriceUsd;
+          const mainnetFeeEtnNum = Number(formatEther(txReceipt.gasUsed * ELECTRONEUM_STANDARD_BASE_FEE));
+          const mainnetFeeUsdNum = mainnetFeeEtnNum * etnPriceUsd;
 
           // Format fees safely, handling micro-fees on testnet
           let feeUsd: string;
@@ -132,10 +131,10 @@ export async function GET() {
             feeUsd = `$${actualFeeUsdNum.toFixed(2)} USD`;
           }
 
-          if (actualFeeAvaxNum < 0.00001) {
+          if (actualFeeEtnNum < 0.00001) {
             feeNative = `< 0.00001 ${symbol}`;
           } else {
-            feeNative = `${actualFeeAvaxNum.toFixed(5)} ${symbol}`;
+            feeNative = `${actualFeeEtnNum.toFixed(5)} ${symbol}`;
           }
 
           lastTxActual = {
@@ -147,7 +146,7 @@ export async function GET() {
             feeNative,
             feeUsd,
             mainnetEquivalentUsd: `$${mainnetFeeUsdNum.toFixed(2)} USD`,
-            mainnetEquivalentNative: `${mainnetFeeAvaxNum.toFixed(4)} ${symbol}`,
+            mainnetEquivalentNative: `${mainnetFeeEtnNum.toFixed(4)} ${symbol}`,
             anchoredAt: latestAnchoredAt ? new Date(latestAnchoredAt).toISOString() : null,
             explorerUrl: getBlockExplorerTxUrl(latestTxHash),
           };

@@ -13,7 +13,7 @@ export interface IProviderAlertsSettings {
 
 export const DEFAULT_ALERTS_CONFIG: IProviderAlertsSettings = {
   termiiMinBalanceNgn: 500, // ~125 SMS units at ₦4/SMS
-  relayerMinBalanceNative: 0.5, // 0.5 AVAX / ETN
+  relayerMinBalanceNative: 10.0, // 10.0 ETN
   diditMinChecksRemaining: 10, // 10 KYC checks remaining
   alertWebhookUrl: null,
   alertEmailRecipient: null,
