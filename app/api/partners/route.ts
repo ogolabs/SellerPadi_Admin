@@ -5,6 +5,7 @@ import {
   AdminPartnerPayout,
   AdminSystemConfig,
 } from "@/lib/db";
+import { sendAdminPartnerApprovalNotification } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -189,6 +190,21 @@ export async function PUT(req: NextRequest) {
 
     if (!updated) {
       return NextResponse.json({ error: "Partner not found" }, { status: 404 });
+    }
+
+    if (status === "active" && updated && !updated.application?.welcomeNotificationSent) {
+      sendAdminPartnerApprovalNotification(updated)
+        .then((result) => {
+          if (result.sent) {
+            AdminPartner.findByIdAndUpdate(partnerId, {
+              $set: {
+                "application.welcomeNotificationSent": true,
+                "application.welcomeNotificationSentAt": new Date(),
+              },
+            }).catch((err) => console.error("Error setting welcomeNotificationSent flag:", err));
+          }
+        })
+        .catch((err) => console.error("Admin partner approval notification error:", err));
     }
 
     return NextResponse.json({
