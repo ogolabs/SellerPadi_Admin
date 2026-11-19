@@ -193,3 +193,243 @@ export async function sendAdminOtpEmail(toEmail: string, code: string): Promise<
     throw err;
   }
 }
+
+export async function sendTermiiAdminSms(cleanPhone: string, text: string): Promise<boolean> {
+  const apiKey = process.env.TERMII_API_KEY?.trim();
+  const rawBaseUrl = process.env.TERMII_BASE_URL?.trim() || "https://v4.api.termii.com";
+  const baseUrl = rawBaseUrl.replace(/\/+$/, "");
+  const senderId = process.env.TERMII_SENDER_ID?.trim() || "SellerPadi";
+  const channel = process.env.TERMII_CHANNEL?.trim().toLowerCase() === "dnd" ? "dnd" : "generic";
+
+  if (!apiKey || !cleanPhone) return false;
+
+  const termiiTo = cleanPhone.replace(/[^0-9]/g, "").replace(/^0/, "234");
+
+  try {
+    const res = await fetch(`${baseUrl}/api/sms/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        to: termiiTo,
+        from: senderId,
+        sms: text,
+        type: "plain",
+        channel,
+        api_key: apiKey,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export interface AdminPartnerApprovalNotificationDoc {
+  _id: string;
+  partnerCode: string;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  country?: string | null;
+  payoutCurrency?: string;
+  application?: {
+    welcomeNotificationSent?: boolean;
+    welcomeNotificationSentAt?: Date | null;
+  } | null;
+}
+
+export async function sendAdminPartnerApprovalNotification(
+  partner: AdminPartnerApprovalNotificationDoc
+): Promise<{ sent: boolean; channel?: "email" | "sms"; error?: string }> {
+  try {
+    if (partner.application?.welcomeNotificationSent) {
+      return { sent: false };
+    }
+
+    const fullName = partner.fullName?.trim() || "Partner";
+    const partnerCode = partner.partnerCode.trim().toUpperCase();
+    const email = partner.email && partner.email.includes("@") ? partner.email.trim().toLowerCase() : null;
+    const phone = partner.phone ? partner.phone.replace(/[^0-9+]/g, "") : null;
+
+    // Dynamic country-localized withdrawal threshold (strictly separated)
+    const country = (partner.country || "NG").toUpperCase();
+    const isNigeria = country === "NG" || partner.payoutCurrency === "NGN";
+    const minPayoutDisplay = isNigeria ? "₦5,000 NGN" : "$25 USD";
+
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.sellerpadi.com";
+    const partnerPortalUrl = `${APP_URL}/partners/dashboard`;
+    const referralLink = `${APP_URL}/onboarding?ref=${partnerCode}`;
+
+    if (email) {
+      const token = getZeptoToken();
+      const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL || "no-reply@sellerpadi.com";
+      const fromName = process.env.ZEPTOMAIL_FROM_NAME || "SellerPadi";
+
+      const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Your Partner Application is Approved!</title>
+</head>
+<body style="margin: 0; padding: 36px 12px; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
+  <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <tr>
+      <td style="background-color: #0F172A; padding: 24px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle" align="left" style="line-height:1;">
+              <span style="display:inline-block;background:#1E293B;color:#38BDF8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;padding:4px 9px;border-radius:6px;border:1px solid #334155;line-height:14px;">
+                PARTNER ACTIVE &bull; 20% RECURRING SHARE
+              </span>
+              <h1 style="margin: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em;">
+                Your Partner Application is Approved!
+              </h1>
+              <p style="margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;">
+                Welcome to the official SellerPadi Partnership Program.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 32px 32px 24px 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+        <p style="margin: 0 0 16px 0; font-size: 15px; color: #0F172A; font-weight: 600;">
+          Dear ${fullName},
+        </p>
+        <p style="margin: 0 0 18px 0;">
+          We are pleased to inform you that your <strong>SellerPadi Partnership Program</strong> application has been reviewed and <strong style="color: #059669;">Approved</strong>!
+        </p>
+        <p style="margin: 0 0 20px 0;">
+          You are now officially authorized to earn recurring revenue recommending SellerPadi to retailers, boutiques, supermarkets, delivery networks, etc.
+        </p>
+
+        <!-- Promo Code Box -->
+        <div style="background-color: #0B1220; border: 1px solid #1E293B; border-radius: 12px; padding: 22px; margin: 24px 0; text-align: center; color: #FFFFFF;">
+          <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px;">
+            Your Unique Partner Promo Code
+          </p>
+          <div style="font-size: 26px; font-weight: 800; font-family: monospace; letter-spacing: 3px; color: #38BDF8; margin-bottom: 12px;">
+            ${partnerCode}
+          </div>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #94A3B8;">
+            Direct Referral Link:
+          </p>
+          <div style="background-color: #1E293B; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 12px; color: #F8FAFC; word-break: break-all;">
+            <a href="${referralLink}" style="color: #38BDF8; text-decoration: none;">${referralLink}</a>
+          </div>
+        </div>
+
+        <!-- Commercial Terms -->
+        <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 18px; margin: 24px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 13px;">
+            <tr>
+              <td style="padding: 6px 0; color: #64748B; font-weight: 500;">Your Commission Share:</td>
+              <td align="right" style="padding: 6px 0; color: #059669; font-weight: 700;">20% Passive Revenue</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748B; font-weight: 500;">Commission Duration:</td>
+              <td align="right" style="padding: 6px 0; color: #0F172A; font-weight: 700;">24 Months (2 Full Years)</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748B; font-weight: 500;">Merchant Incentive:</td>
+              <td align="right" style="padding: 6px 0; color: #2563EB; font-weight: 600;">20% Off 1st Subscription</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748B; font-weight: 500;">Minimum Bank Withdrawal:</td>
+              <td align="right" style="padding: 6px 0; color: #0F172A; font-weight: 700;">${minPayoutDisplay}</td>
+            </tr>
+          </table>
+        </div>
+
+        <p style="margin: 0 0 12px 0; font-size: 13px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          How to Succeed as a Partner:
+        </p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 13px; margin-bottom: 24px;">
+          <tr>
+            <td valign="top" style="padding: 8px 0; width: 24px; color: #2563EB; font-weight: 700;">1.</td>
+            <td style="padding: 8px 0 8px 8px; color: #334155;">
+              <strong>Share Your Code or Link:</strong> Share with retail stores, supermarkets, dispatch networks, and social vendors.
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="padding: 8px 0; width: 24px; color: #2563EB; font-weight: 700;">2.</td>
+            <td style="padding: 8px 0 8px 8px; color: #334155;">
+              <strong>Highlight Cost Savings:</strong> Show merchants how SellerPadi eliminates paper thermal rolls and protects parcel deliveries.
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="padding: 8px 0; width: 24px; color: #2563EB; font-weight: 700;">3.</td>
+            <td style="padding: 8px 0 8px 8px; color: #334155;">
+              <strong>Track Real-Time Analytics:</strong> Monitor click-throughs, signups, and commission balances on your dashboard.
+            </td>
+          </tr>
+          <tr>
+            <td valign="top" style="padding: 8px 0; width: 24px; color: #2563EB; font-weight: 700;">4.</td>
+            <td style="padding: 8px 0 8px 8px; color: #334155;">
+              <strong>Fast Bank Payouts:</strong> Request direct bank withdrawals as soon as your available balance reaches <strong>${minPayoutDisplay}</strong>.
+            </td>
+          </tr>
+        </table>
+
+        <div style="text-align: center; padding: 12px 0 24px 0;">
+          <a href="${partnerPortalUrl}" style="display: inline-block; background-color: #155EEF; color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 28px; border-radius: 12px;">
+            Open Partner Portal &rarr;
+          </a>
+        </div>
+
+        <p style="margin: 16px 0 0 0; font-size: 12px; color: #64748B;">
+          Have questions or enterprise partnership inquiries? Contact our partner desk at <a href="mailto:support@sellerpadi.com" style="color: #2563EB; text-decoration: none;">support@sellerpadi.com</a>.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #F8FAFC; padding: 16px 32px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 11px; color: #94A3B8;">
+        &copy; ${new Date().getFullYear()} SellerPadi &bull; OGOLABS TECHNOLOGY LTD (RC: 10005885)
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `.trim();
+
+      const response = await fetch(ZEPTO_API_URL, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify({
+          from: { address: fromEmail, name: fromName },
+          to: [{ email_address: { address: email, name: fullName } }],
+          subject: `Your SellerPadi Partner Application is Approved! (Code: ${partnerCode})`,
+          htmlbody: htmlBody,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        const readableError = parseZeptoMailError(response.status, errorText);
+        throw new Error(readableError);
+      }
+
+      return { sent: true, channel: "email" };
+    }
+
+    if (phone) {
+      const smsText = `Congratulations ${fullName}! Your SellerPadi Partner application is approved. Your promo code is ${partnerCode}. Start earning 20% recurring share at app.sellerpadi.com/partners/dashboard. Support: support@sellerpadi.com`;
+      const sent = await sendTermiiAdminSms(phone, smsText);
+      return { sent, channel: "sms" };
+    }
+
+    return { sent: false, error: "No email or phone found on partner record." };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Failed to dispatch partner approval notification";
+    console.error("[Admin Partner Approval] Error:", errorMsg);
+    return { sent: false, error: errorMsg };
+  }
+}
+

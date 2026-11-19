@@ -818,6 +818,8 @@ export interface IAdminPartnerApplication {
   appliedAt: Date;
   reviewedAt?: Date | null;
   reviewedBy?: string | null;
+  welcomeNotificationSent?: boolean;
+  welcomeNotificationSentAt?: Date | null;
 }
 
 export interface IAdminPartnerDoc {
@@ -883,6 +885,8 @@ const AdminPartnerSchema = new Schema<IAdminPartnerDoc>(
           appliedAt: { type: Date, default: Date.now },
           reviewedAt: { type: Date, default: null },
           reviewedBy: { type: String, default: null },
+          welcomeNotificationSent: { type: Boolean, default: false },
+          welcomeNotificationSentAt: { type: Date, default: null },
         },
         { _id: false }
       ),
