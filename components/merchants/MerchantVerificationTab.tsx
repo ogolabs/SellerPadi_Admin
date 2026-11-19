@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  ShieldCheck,
   ShieldAlert,
   Clock,
   CheckCircle2,
@@ -63,7 +62,13 @@ export default function MerchantVerificationTab({
   const isVerified = status === "verified";
   const isPending = status === "pending";
   const isRejected = status === "rejected";
-  const isKyb = verification?.verificationType === "kyb" || Boolean(verification?.businessName);
+  const isKyb = true;
+  const hasSubmittedInfo = Boolean(
+    verification?.sessionId ||
+    verification?.businessName ||
+    verification?.registrationNumber ||
+    isPending
+  );
 
   const handleUpdateStatus = async (
     targetStatus: "verified" | "rejected" | "unverified",
@@ -128,11 +133,7 @@ export default function MerchantVerificationTab({
                 }`}
               >
                 {isVerified ? (
-                  isKyb ? (
-                    <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  )
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 ) : isPending ? (
                   <Clock className="w-3.5 h-3.5 text-blue-500" />
                 ) : isRejected ? (
@@ -142,48 +143,52 @@ export default function MerchantVerificationTab({
                 )}
                 <span>
                   {isVerified
-                    ? isKyb
-                      ? "Business Verified (KYB)"
-                      : "Business Owner Verified (KYC)"
+                    ? "Verified Business (KYB)"
                     : isPending
-                    ? isKyb
-                      ? "KYB Under Review"
-                      : "KYC Under Review"
+                    ? "KYB Under Review"
                     : isRejected
-                    ? isKyb
-                      ? "KYB Rejected"
-                      : "KYC Rejected"
+                    ? "KYB Rejected"
                     : "Unverified Merchant"}
                 </span>
               </span>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-              {isVerified && isKyb &&
+              {isVerified &&
                 "Merchant company identity authenticated via official corporate registry lookup & beneficial ownership verification (KYB)."}
-              {isVerified && !isKyb &&
-                "Merchant individual identity authenticated via automated government document & biometric verification (KYC)."}
               {isPending &&
                 "Verification session completed and currently under compliance operator review."}
               {isRejected &&
                 "Verification was rejected by a compliance administrator or automated risk check."}
               {!isVerified && !isPending && !isRejected &&
-                "Merchant has not yet submitted identification or registry documentation for automated verification."}
+                "Merchant has not yet completed official company registry verification (KYB)."}
             </p>
           </div>
 
           {/* Admin Moderation Actions */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0 pt-2 sm:pt-0">
             {!isVerified && (
-              <button
-                type="button"
-                onClick={() => handleUpdateStatus("verified")}
-                disabled={isUpdating}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] sm:text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-[0.98]"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{isKyb ? "Approve Business (KYB)" : "Approve Identity"}</span>
-              </button>
+              <div className="inline-flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleUpdateStatus("verified")}
+                  disabled={isUpdating || !hasSubmittedInfo}
+                  title={!hasSubmittedInfo ? "Merchant has not submitted business verification info or session yet" : undefined}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition-colors shadow-xs active:scale-[0.98] ${
+                    !hasSubmittedInfo
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed opacity-60"
+                      : "bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Approve Business (KYB)</span>
+                </button>
+                {!hasSubmittedInfo && (
+                  <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 rounded-full whitespace-nowrap">
+                    Awaiting Submission
+                  </span>
+                )}
+              </div>
             )}
 
             {!isRejected && (
@@ -234,13 +239,9 @@ export default function MerchantVerificationTab({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {isKyb ? (
-                <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              ) : (
-                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              )}
+              <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                {isKyb ? "Official Corporate Registry Record (KYB)" : "Government Identity Record (KYC)"}
+                Official Corporate Registry Record (KYB)
               </span>
             </div>
             {isVerified ? (
@@ -290,7 +291,7 @@ export default function MerchantVerificationTab({
               <div className="flex justify-between items-center text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200/60 dark:border-slate-800/60">
                 <span>Compliance Level:</span>
                 <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                  Tier-2 Verified Business
+                  Verified Business (KYB)
                 </span>
               </div>
               <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">

@@ -231,7 +231,6 @@ export default function MerchantDetailPage() {
   const isVerified = verificationStatus === "verified";
   const isPending = verificationStatus === "pending";
   const isRejected = verificationStatus === "rejected";
-  const isKyb = merchant.verification?.verificationType === "kyb" || Boolean(merchant.verification?.businessName);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -263,22 +262,18 @@ export default function MerchantDetailPage() {
 
             {isVerified ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                {isKyb ? (
-                  <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                )}
-                {isKyb ? "Business Verified (Tier-2)" : "Business Owner Verified (Tier-1)"}
+                <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                Verified Business
               </span>
             ) : isPending ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
                 <Clock className="w-3 h-3 text-blue-500" />
-                {isKyb ? "KYB Under Review" : "KYC Under Review"}
+                KYB Under Review
               </span>
             ) : isRejected ? (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                 <ShieldAlert className="w-3.5 h-3.5" />
-                {isKyb ? "KYB Rejected" : "KYC Rejected"}
+                KYB Rejected
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700">
@@ -483,7 +478,7 @@ export default function MerchantDetailPage() {
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-          <span>Compliance &amp; KYB</span>
+          <span>Business Verification (KYB)</span>
         </button>
 
         <button

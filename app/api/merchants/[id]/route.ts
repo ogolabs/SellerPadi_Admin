@@ -410,13 +410,33 @@ export async function PATCH(
         );
       }
 
-      updateFields["verification.status"] = body.verificationStatus;
       if (body.verificationStatus === "verified") {
+        const hasSubmitted = Boolean(
+          existingUser.verification?.sessionId ||
+          existingUser.verification?.businessName ||
+          existingUser.verification?.registrationNumber ||
+          existingUser.verification?.status === "pending"
+        );
+        if (!hasSubmitted) {
+          return NextResponse.json(
+            { error: "Cannot approve verification: Merchant has not submitted business verification information or session." },
+            { status: 400 }
+          );
+        }
+
+        updateFields["verification.status"] = "verified";
         updateFields["verification.verifiedAt"] = new Date();
         updateFields["verification.rejectionReason"] = null;
+        updateFields["verification.provider"] = existingUser.verification?.provider || "didit";
+        updateFields["verification.verificationType"] = "kyb";
+        if (existingUser.verification?.businessName && !existingUser.companyName) {
+          updateFields["companyName"] = existingUser.verification.businessName;
+        }
       } else if (body.verificationStatus === "rejected") {
+        updateFields["verification.status"] = "rejected";
         updateFields["verification.rejectionReason"] = body.rejectionReason || "Verification rejected by compliance administrator";
       } else {
+        updateFields["verification.status"] = body.verificationStatus;
         updateFields["verification.rejectionReason"] = null;
       }
     }
