@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Radio,
+  Handshake,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle/ThemeToggle";
 
@@ -64,6 +65,7 @@ export function AdminShell({ children }: AdminShellProps) {
     { label: "Infrastructure", href: "/infrastructure", icon: Server },
     { label: "Merchant Directory", href: "/merchants", icon: Building2 },
     { label: "Universal Ledger", href: "/records", icon: FileSpreadsheet },
+    { label: "Partner Program", href: "/partners", icon: Handshake },
     { label: "Incidents & Errors", href: "/incidents", icon: AlertOctagon },
   ];
 

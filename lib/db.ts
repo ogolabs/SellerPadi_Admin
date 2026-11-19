@@ -733,6 +733,14 @@ export interface ISystemConfigDoc {
   alertWebhookUrl?: string | null;
   alertEmailRecipient?: string | null;
   lastAlertDispatchedAt?: Date | null;
+  partnerDiscountPercent?: number;
+  partnerCommissionPercent?: number;
+  partnerCommissionDurationMonths?: number;
+  partnerMinPayoutNgn?: number;
+  partnerMinPayoutUsd?: number;
+  partnerTermsVersion?: string;
+  partnerTermsContent?: string;
+  partnerRegistrationOpen?: boolean;
   updatedBy?: string | null;
   updatedAt?: Date;
   createdAt?: Date;
@@ -792,6 +800,177 @@ const AdminBatchRecordSchema = new Schema<IAdminBatchRecordDoc>(
 export const AdminBatchRecord: Model<IAdminBatchRecordDoc> =
   mongoose.models.AdminBatchRecord ||
   mongoose.model<IAdminBatchRecordDoc>("AdminBatchRecord", AdminBatchRecordSchema, "batchrecords");
+
+export interface IAdminPartnerBankDetails {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  currency: "NGN" | "USD";
+  routingNumberOrSortCode?: string | null;
+}
+
+export interface IAdminPartnerApplication {
+  promotionChannels: string;
+  audienceSize: string;
+  marketingExperience: string;
+  websiteOrSocialLink?: string | null;
+  adminNotes?: string | null;
+  appliedAt: Date;
+  reviewedAt?: Date | null;
+  reviewedBy?: string | null;
+}
+
+export interface IAdminPartnerDoc {
+  _id: string;
+  partnerCode: string;
+  userId?: string | null;
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  country?: string | null;
+  status: "pending" | "active" | "rejected" | "suspended";
+  termsAccepted: boolean;
+  termsAcceptedAt: Date;
+  termsVersion: string;
+  bankDetails?: IAdminPartnerBankDetails | null;
+  application?: IAdminPartnerApplication | null;
+  payoutCurrency: "NGN" | "USD";
+  earnings: {
+    totalEarnedNgn: number;
+    totalEarnedUsd: number;
+    unpaidBalanceNgn: number;
+    unpaidBalanceUsd: number;
+    totalPaidNgn: number;
+    totalPaidUsd: number;
+  };
+  metrics: {
+    clicksCount: number;
+    signupsCount: number;
+    payingCustomersCount: number;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AdminPartnerSchema = new Schema<IAdminPartnerDoc>(
+  {
+    _id: { type: String, required: true },
+    partnerCode: { type: String, required: true, uppercase: true, unique: true, index: true },
+    userId: { type: String, default: null, index: true },
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true, index: true },
+    phone: { type: String, default: null },
+    country: { type: String, default: null },
+    status: { type: String, enum: ["pending", "active", "rejected", "suspended"], default: "pending", index: true },
+    termsAccepted: { type: Boolean, required: true, default: true },
+    termsAcceptedAt: { type: Date, required: true, default: Date.now },
+    termsVersion: { type: String, required: true, default: "v1.0" },
+    bankDetails: {
+      bankName: { type: String, default: "" },
+      accountNumber: { type: String, default: "" },
+      accountName: { type: String, default: "" },
+      currency: { type: String, enum: ["NGN", "USD"], default: "NGN" },
+      routingNumberOrSortCode: { type: String, default: null },
+    },
+    application: {
+      type: new Schema(
+        {
+          promotionChannels: { type: String, default: "" },
+          audienceSize: { type: String, default: "" },
+          marketingExperience: { type: String, default: "" },
+          websiteOrSocialLink: { type: String, default: null },
+          adminNotes: { type: String, default: null },
+          appliedAt: { type: Date, default: Date.now },
+          reviewedAt: { type: Date, default: null },
+          reviewedBy: { type: String, default: null },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
+    payoutCurrency: { type: String, enum: ["NGN", "USD"], default: "NGN" },
+    earnings: {
+      totalEarnedNgn: { type: Number, default: 0 },
+      totalEarnedUsd: { type: Number, default: 0 },
+      unpaidBalanceNgn: { type: Number, default: 0 },
+      unpaidBalanceUsd: { type: Number, default: 0 },
+      totalPaidNgn: { type: Number, default: 0 },
+      totalPaidUsd: { type: Number, default: 0 },
+    },
+    metrics: {
+      clicksCount: { type: Number, default: 0 },
+      signupsCount: { type: Number, default: 0 },
+      payingCustomersCount: { type: Number, default: 0 },
+    },
+  },
+  { timestamps: true, collection: "partners", strict: false }
+);
+
+if (mongoose.models.AdminPartner) {
+  delete mongoose.models.AdminPartner;
+}
+
+export const AdminPartner: Model<IAdminPartnerDoc> =
+  mongoose.models.AdminPartner || mongoose.model<IAdminPartnerDoc>("AdminPartner", AdminPartnerSchema, "partners");
+
+export interface IAdminPartnerPayoutDoc {
+  _id: string;
+  partnerId: string;
+  partnerCode: string;
+  partnerEmail: string;
+  amount: number;
+  currency: "NGN" | "USD";
+  bankDetails: IAdminPartnerBankDetails;
+  status: "pending" | "processing" | "paid" | "rejected";
+  adminNotes?: string | null;
+  transferReference?: string | null;
+  fxRate?: number | null;
+  originalUnpaidNgn?: number | null;
+  originalUnpaidUsd?: number | null;
+  requestedAt: Date;
+  processedAt?: Date | null;
+  processedBy?: {
+    email: string;
+    name?: string;
+  } | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const AdminPartnerPayoutSchema = new Schema<IAdminPartnerPayoutDoc>(
+  {
+    _id: { type: String, required: true },
+    partnerId: { type: String, required: true, index: true },
+    partnerCode: { type: String, required: true, uppercase: true, index: true },
+    partnerEmail: { type: String, required: true, index: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, enum: ["NGN", "USD"], required: true },
+    bankDetails: {
+      bankName: { type: String, required: true },
+      accountNumber: { type: String, required: true },
+      accountName: { type: String, required: true },
+      currency: { type: String, enum: ["NGN", "USD"], required: true },
+      routingNumberOrSortCode: { type: String, default: null },
+    },
+    status: { type: String, enum: ["pending", "processing", "paid", "rejected"], default: "pending", index: true },
+    adminNotes: { type: String, default: null },
+    transferReference: { type: String, default: null },
+    fxRate: { type: Number, default: null },
+    originalUnpaidNgn: { type: Number, default: null },
+    originalUnpaidUsd: { type: Number, default: null },
+    requestedAt: { type: Date, default: Date.now, index: true },
+    processedAt: { type: Date, default: null },
+    processedBy: {
+      email: { type: String, default: null },
+      name: { type: String, default: null },
+    },
+  },
+  { timestamps: true, collection: "partnerpayouts", strict: false }
+);
+
+export const AdminPartnerPayout: Model<IAdminPartnerPayoutDoc> =
+  mongoose.models.AdminPartnerPayout || mongoose.model<IAdminPartnerPayoutDoc>("AdminPartnerPayout", AdminPartnerPayoutSchema, "partnerpayouts");
+
 
 
 

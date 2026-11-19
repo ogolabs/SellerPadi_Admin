@@ -13,13 +13,17 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
     const skip = (page - 1) * limit;
 
-    // Filter base
-    const baseFilter: Record<string, unknown> = {
+    // Filter base: strictly merchants who have an active store profile (not pure partners)
+    const merchantStoreCondition: Record<string, unknown> = {
+      role: { $ne: "partner" },
       $or: [
-        { role: "merchant" },
         { hasMerchantProfile: true },
-        { companyName: { $exists: true, $ne: null } },
+        { companyName: { $exists: true, $nin: [null, ""] } },
       ],
+    };
+
+    const baseFilter: Record<string, unknown> = {
+      ...merchantStoreCondition,
     };
 
     if (status === "active") {
@@ -70,9 +74,9 @@ export async function GET(req: NextRequest) {
 
     const [total, totalActive, totalSuspended, totalVerified, totalBranches, userDocs] = await Promise.all([
       AdminUser.countDocuments(baseFilter),
-      AdminUser.countDocuments({ role: "merchant", isSuspended: { $ne: true } }),
-      AdminUser.countDocuments({ role: "merchant", isSuspended: true }),
-      AdminUser.countDocuments({ role: "merchant", "verification.status": "verified" }),
+      AdminUser.countDocuments({ ...merchantStoreCondition, isSuspended: { $ne: true } }),
+      AdminUser.countDocuments({ ...merchantStoreCondition, isSuspended: true }),
+      AdminUser.countDocuments({ ...merchantStoreCondition, "verification.status": "verified" }),
       AdminBranch.countDocuments(),
       AdminUser.find(baseFilter)
         .select(
