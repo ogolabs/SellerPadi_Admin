@@ -549,6 +549,37 @@ export const AdminPushSubscription: Model<IPushSubscriptionDoc> =
   mongoose.models.AdminPushSubscription ||
   mongoose.model<IPushSubscriptionDoc>("AdminPushSubscription", PushSubscriptionSchema, "pushsubscriptions");
 
+export interface IAdminNotificationDoc {
+  _id: string;
+  ownerAddress: string;
+  registrationId?: string;
+  type: string;
+  title?: string;
+  message: string;
+  url?: string;
+  read: boolean;
+  createdAt?: Date;
+}
+
+const AdminNotificationSchema = new Schema<IAdminNotificationDoc>(
+  {
+    _id: { type: String, required: true },
+    ownerAddress: { type: String, required: true, index: true },
+    registrationId: { type: String, default: "" },
+    type: { type: String, required: true },
+    title: { type: String, default: "" },
+    message: { type: String, required: true },
+    url: { type: String, default: "/workspace" },
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { collection: "notifications" }
+);
+
+export const AdminNotification: Model<IAdminNotificationDoc> =
+  mongoose.models.AdminNotification ||
+  mongoose.model<IAdminNotificationDoc>("AdminNotification", AdminNotificationSchema, "notifications");
+
 export interface IAdminVendorDoc {
   _id: string;
   merchantAddress: string;
