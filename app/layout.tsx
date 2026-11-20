@@ -6,7 +6,7 @@ import { QueryProvider } from "@/components/QueryProvider";
 import { ThemeProvider } from "@/context/ThemeContext";
 
 export const metadata: Metadata = {
-  title: "SellerPadi Mission Control — Platform Operations & Telemetry",
+  title: "SellerPadi Admin — Platform Operations & Telemetry",
   description: "Internal operations, merchant supervision, and relayer monitoring suite.",
   robots: {
     index: false,

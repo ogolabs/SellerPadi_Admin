@@ -117,7 +117,7 @@ export function AdminShell({ children }: AdminShellProps) {
               <Image src="/logo-icon.svg" alt="SellerPadi" width={24} height={24} className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-semibold text-sm tracking-tight text-slate-900 dark:text-white truncate">SellerPadi Mission Control</h2>
+              <h2 className="font-semibold text-sm tracking-tight text-slate-900 dark:text-white truncate">SellerPadi Admin</h2>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[11px] text-slate-500 dark:text-slate-400">Ledger Online</span>
