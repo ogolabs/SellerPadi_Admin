@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectAdminDb, AdminPartnerPayout, AdminPartner } from "@/lib/db";
+import crypto from "crypto";
+import { connectAdminDb, AdminPartnerPayout, AdminPartner, AdminNotification, AdminUser } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,39 @@ export async function POST(req: NextRequest) {
         : { "earnings.totalPaidUsd": payout.amount };
 
       await AdminPartner.updateOne({ _id: partner._id }, { $inc: incUpdate });
+
+      // Dispatch in-app notification to partner
+      try {
+        let recipientAddress = (partner.userId || String(partner._id)).toLowerCase();
+        if (partner.userId) {
+          const userDoc = await AdminUser.findOne({
+            $or: [{ _id: partner.userId }, { eoaAddress: partner.userId }],
+          }).lean();
+          if (userDoc?.eoaAddress) recipientAddress = userDoc.eoaAddress.toLowerCase();
+          else if (userDoc?._id) recipientAddress = String(userDoc._id).toLowerCase();
+        } else if (partner.email) {
+          const cleanEmail = partner.email.toLowerCase().trim();
+          const userDoc = await AdminUser.findOne({
+            $or: [{ businessEmail: cleanEmail }, { email: cleanEmail }],
+          }).lean();
+          if (userDoc?.eoaAddress) recipientAddress = userDoc.eoaAddress.toLowerCase();
+          else if (userDoc?._id) recipientAddress = String(userDoc._id).toLowerCase();
+        }
+
+        await AdminNotification.create({
+          _id: crypto.randomUUID(),
+          ownerAddress: recipientAddress,
+          registrationId: String(payout._id),
+          type: "partner_payout_processed",
+          title: `Payout Disbursed: ${payout.currency} ${payout.amount.toLocaleString()}`,
+          message: `Your payout of ${payout.currency} ${payout.amount.toLocaleString()} has been approved and sent to your bank account (Ref: ${String(transferReference).trim()}).`,
+          url: "/partners/dashboard",
+          read: false,
+          createdAt: now,
+        });
+      } catch (notifErr) {
+        console.warn("Failed to dispatch partner payout notification:", notifErr);
+      }
 
       return NextResponse.json({
         success: true,

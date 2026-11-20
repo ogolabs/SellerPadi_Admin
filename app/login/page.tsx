@@ -213,7 +213,7 @@ export default function AdminLoginPage() {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">SellerPadi Mission Control</h1>
+            <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">SellerPadi Admin</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">Internal Platform &amp; Telemetry Suite</p>
           </div>
         </div>

@@ -164,7 +164,7 @@ export async function checkTermiiStatus(minBalanceThresholdNgn = 500): Promise<T
 export function checkZeptoMailStatus(): ZeptoMailTelemetry {
   const token = process.env.ZEPTOMAIL_SEND_TOKEN?.trim() || "";
   const senderEmail = process.env.ZEPTOMAIL_FROM_EMAIL?.trim() || "no-reply@sellerpadi.com";
-  const senderName = process.env.ZEPTOMAIL_FROM_NAME?.trim() || "SellerPadi Mission Control";
+  const senderName = process.env.ZEPTOMAIL_FROM_NAME?.trim() || "SellerPadi Admin";
 
   if (!token) {
     return {

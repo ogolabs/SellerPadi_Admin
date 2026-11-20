@@ -1,6 +1,6 @@
 # SellerPadi — Internal Admin & Telemetry Dashboard Architecture
 
-> **SellerPadi Mission Control**: A dedicated, decoupled operations suite for end-to-end platform observability, merchant management, blockchain relayer supervision, infrastructure telemetry, and automated incident response.
+> **SellerPadi Admin**: A dedicated, decoupled operations suite for end-to-end platform observability, merchant management, blockchain relayer supervision, infrastructure telemetry, and automated incident response.
 
 ---
 
@@ -43,7 +43,7 @@ The admin platform is structured into five distinct operational portals:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                SellerPadi MISSION CONTROL                                   │
+│                                SellerPadi Admin                                   │
 └───────────────────────────────────┬────────────────────────────────────────────────────┘
                                     │
     ┌───────────────┬───────────────┼───────────────┬────────────────┐
