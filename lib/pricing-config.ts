@@ -13,11 +13,11 @@ export const BASE_TIER_MONTHLY: Record<
   { name: string; ngn: number; usd: number; quota: number; annualQuota: number }
 > = {
   free: {
-    name: "Free Tier",
+    name: "Free Starter Trial",
     ngn: 0,
     usd: 0,
     quota: 100,
-    annualQuota: 1200,
+    annualQuota: 100,
   },
   starter_500: {
     name: "Starter 500",
