@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectAdminDb();
     const body = await req.json();
-    const { payoutId, action, transferReference, adminNotes, adminEmail } = body;
+    const { payoutId, action, transferReference, txHash, adminNotes, adminEmail } = body;
 
     if (!payoutId || !["approve", "reject"].includes(action)) {
       return NextResponse.json({ error: "payoutId and valid action ('approve' | 'reject') are required" }, { status: 400 });
@@ -70,14 +70,34 @@ export async function POST(req: NextRequest) {
 
     const now = new Date();
     const isNgn = payout.currency === "NGN";
+    const isCrypto = payout.payoutMethod === "crypto" || (!isNgn && Boolean(payout.cryptoDetails?.walletAddress));
 
     if (action === "approve") {
-      if (!transferReference || !String(transferReference).trim()) {
-        return NextResponse.json({ error: "Transfer reference is required to approve manual payout" }, { status: 400 });
+      let resolvedTxHash: string | null = null;
+      let resolvedTransferRef: string | null = null;
+
+      if (isCrypto) {
+        const rawTx = String(txHash || transferReference || "").trim();
+        if (!rawTx || !/^0x[a-fA-F0-9]{64}$/.test(rawTx)) {
+          return NextResponse.json(
+            { error: "Valid Electroneum transaction hash (0x... 64 hex characters) is required to approve crypto payout" },
+            { status: 400 }
+          );
+        }
+        resolvedTxHash = rawTx;
+        resolvedTransferRef = rawTx;
+      } else {
+        if (!transferReference || !String(transferReference).trim()) {
+          return NextResponse.json({ error: "Transfer reference is required to approve manual payout" }, { status: 400 });
+        }
+        resolvedTransferRef = String(transferReference).trim();
       }
 
       payout.status = "paid";
-      payout.transferReference = String(transferReference).trim();
+      payout.transferReference = resolvedTransferRef;
+      if (resolvedTxHash) {
+        payout.txHash = resolvedTxHash;
+      }
       payout.adminNotes = adminNotes?.trim() || null;
       payout.processedAt = now;
       payout.processedBy = {
@@ -111,13 +131,21 @@ export async function POST(req: NextRequest) {
           else if (userDoc?._id) recipientAddress = String(userDoc._id).toLowerCase();
         }
 
+        const tokenSymbol = payout.cryptoDetails?.token || "USDC";
+        const notifTitle = isCrypto
+          ? `Payout Disbursed: $${payout.amount.toLocaleString()} in ${tokenSymbol}`
+          : `Payout Disbursed: ${payout.currency} ${payout.amount.toLocaleString()}`;
+        const notifMessage = isCrypto
+          ? `Your referral payout of $${payout.amount.toLocaleString()} in Hyperlane ${tokenSymbol} has been sent to your Electroneum wallet (Tx: ${resolvedTxHash}).`
+          : `Your payout of ${payout.currency} ${payout.amount.toLocaleString()} has been approved and sent to your bank account (Ref: ${resolvedTransferRef}).`;
+
         await AdminNotification.create({
           _id: crypto.randomUUID(),
           ownerAddress: recipientAddress,
           registrationId: String(payout._id),
           type: "partner_payout_processed",
-          title: `Payout Disbursed: ${payout.currency} ${payout.amount.toLocaleString()}`,
-          message: `Your payout of ${payout.currency} ${payout.amount.toLocaleString()} has been approved and sent to your bank account (Ref: ${String(transferReference).trim()}).`,
+          title: notifTitle,
+          message: notifMessage,
           url: "/partners/dashboard",
           read: false,
           createdAt: now,
@@ -128,7 +156,9 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: `Payout of ${payout.currency} ${payout.amount.toLocaleString()} approved and marked as Paid.`,
+        message: isCrypto
+          ? `Payout of $${payout.amount.toLocaleString()} in Hyperlane ${payout.cryptoDetails?.token || "USDC"} approved and marked as Paid.`
+          : `Payout of ${payout.currency} ${payout.amount.toLocaleString()} approved and marked as Paid.`,
         payout,
       });
     }

@@ -840,6 +840,14 @@ export interface IAdminPartnerBankDetails {
   routingNumberOrSortCode?: string | null;
 }
 
+export interface IAdminPartnerCryptoDetails {
+  walletAddress: string;
+  token: "USDC" | "USDT";
+  tokenAddress?: string | null;
+  network: "electroneum";
+  chainId: number;
+}
+
 export interface IAdminPartnerApplication {
   promotionChannels: string;
   audienceSize: string;
@@ -866,6 +874,8 @@ export interface IAdminPartnerDoc {
   termsAcceptedAt: Date;
   termsVersion: string;
   bankDetails?: IAdminPartnerBankDetails | null;
+  cryptoDetails?: IAdminPartnerCryptoDetails | null;
+  payoutMethod?: "bank" | "crypto";
   application?: IAdminPartnerApplication | null;
   payoutCurrency: "NGN" | "USD";
   earnings: {
@@ -904,6 +914,14 @@ const AdminPartnerSchema = new Schema<IAdminPartnerDoc>(
       accountName: { type: String, default: "" },
       currency: { type: String, enum: ["NGN", "USD"], default: "NGN" },
       routingNumberOrSortCode: { type: String, default: null },
+    },
+    payoutMethod: { type: String, enum: ["bank", "crypto"], default: "bank" },
+    cryptoDetails: {
+      walletAddress: { type: String, default: null },
+      token: { type: String, enum: ["USDC", "USDT"], default: "USDC" },
+      tokenAddress: { type: String, default: null },
+      network: { type: String, default: "electroneum" },
+      chainId: { type: Number, default: 52014 },
     },
     application: {
       type: new Schema(
@@ -955,10 +973,13 @@ export interface IAdminPartnerPayoutDoc {
   partnerEmail: string;
   amount: number;
   currency: "NGN" | "USD";
-  bankDetails: IAdminPartnerBankDetails;
+  payoutMethod?: "bank" | "crypto";
+  bankDetails?: IAdminPartnerBankDetails | null;
+  cryptoDetails?: IAdminPartnerCryptoDetails | null;
   status: "pending" | "processing" | "paid" | "rejected";
   adminNotes?: string | null;
   transferReference?: string | null;
+  txHash?: string | null;
   fxRate?: number | null;
   originalUnpaidNgn?: number | null;
   originalUnpaidUsd?: number | null;
@@ -980,16 +1001,37 @@ const AdminPartnerPayoutSchema = new Schema<IAdminPartnerPayoutDoc>(
     partnerEmail: { type: String, required: true, index: true },
     amount: { type: Number, required: true },
     currency: { type: String, enum: ["NGN", "USD"], required: true },
+    payoutMethod: { type: String, enum: ["bank", "crypto"], default: "bank" },
     bankDetails: {
-      bankName: { type: String, required: true },
-      accountNumber: { type: String, required: true },
-      accountName: { type: String, required: true },
-      currency: { type: String, enum: ["NGN", "USD"], required: true },
-      routingNumberOrSortCode: { type: String, default: null },
+      type: new Schema(
+        {
+          bankName: { type: String, default: "" },
+          accountNumber: { type: String, default: "" },
+          accountName: { type: String, default: "" },
+          currency: { type: String, enum: ["NGN", "USD"], default: "NGN" },
+          routingNumberOrSortCode: { type: String, default: null },
+        },
+        { _id: false }
+      ),
+      default: null,
+    },
+    cryptoDetails: {
+      type: new Schema(
+        {
+          walletAddress: { type: String, required: true },
+          token: { type: String, enum: ["USDC", "USDT"], required: true },
+          tokenAddress: { type: String, default: null },
+          network: { type: String, default: "electroneum" },
+          chainId: { type: Number, default: 52014 },
+        },
+        { _id: false }
+      ),
+      default: null,
     },
     status: { type: String, enum: ["pending", "processing", "paid", "rejected"], default: "pending", index: true },
     adminNotes: { type: String, default: null },
     transferReference: { type: String, default: null },
+    txHash: { type: String, default: null },
     fxRate: { type: Number, default: null },
     originalUnpaidNgn: { type: Number, default: null },
     originalUnpaidUsd: { type: Number, default: null },
