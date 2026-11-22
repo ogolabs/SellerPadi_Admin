@@ -13,6 +13,9 @@ import {
   UserCheck,
   Sliders,
   ClipboardCheck,
+  ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   Partner,
@@ -49,6 +52,13 @@ export default function AdminPartnersPage() {
   // Settings form state
   const [settingsForm, setSettingsForm] = useState<PartnerSettingsData | null>(null);
   const [settingsSavedMessage, setSettingsSavedMessage] = useState("");
+  const [copiedWalletId, setCopiedWalletId] = useState<string | null>(null);
+
+  const handleCopyWalletAddress = (id: string, address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopiedWalletId(id);
+    setTimeout(() => setCopiedWalletId(null), 2000);
+  };
 
   // 1. Fetch Partners & Program Stats
   const {
@@ -117,6 +127,7 @@ export default function AdminPartnersPage() {
       payoutId: string;
       action: "approve" | "reject";
       transferReference?: string;
+      txHash?: string;
       adminNotes?: string;
     }) => {
       const res = await fetch("/api/partners/payouts", {
@@ -251,7 +262,7 @@ export default function AdminPartnersPage() {
             )}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Awaiting manual bank transfer
+            Awaiting bank / crypto payout
           </div>
         </div>
 
@@ -522,8 +533,48 @@ export default function AdminPartnersPage() {
                           {payout.amount.toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-xs text-slate-700 dark:text-slate-300">
-                          <div className="font-medium">{payout.bankDetails?.bankName}</div>
-                          <div>{payout.bankDetails?.accountNumber} ({payout.bankDetails?.accountName})</div>
+                          {payout.payoutMethod === "crypto" || payout.cryptoDetails?.walletAddress ? (
+                            <div>
+                              <div className="font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                <span>Hyperlane {payout.cryptoDetails?.token || "USDC"}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">(52014)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <a
+                                  href={`https://blockexplorer.electroneum.com/address/${payout.cryptoDetails?.walletAddress}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-mono text-[11px] text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 underline inline-flex items-center gap-1"
+                                >
+                                  <span>
+                                    {payout.cryptoDetails?.walletAddress
+                                      ? `${payout.cryptoDetails.walletAddress.slice(0, 8)}...${payout.cryptoDetails.walletAddress.slice(-6)}`
+                                      : "Wallet not set"}
+                                  </span>
+                                  <ExternalLink className="w-3 h-3 text-slate-400" />
+                                </a>
+                                {payout.cryptoDetails?.walletAddress && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyWalletAddress(payout._id, payout.cryptoDetails!.walletAddress)}
+                                    className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                                    title="Copy full EVM address"
+                                  >
+                                    {copiedWalletId === payout._id ? (
+                                      <Check className="w-3 h-3 text-emerald-500" />
+                                    ) : (
+                                      <Copy className="w-3 h-3" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">{payout.bankDetails?.bankName}</div>
+                              <div>{payout.bankDetails?.accountNumber} ({payout.bankDetails?.accountName})</div>
+                            </>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-xs text-slate-500">
                           {new Date(payout.requestedAt).toLocaleDateString()}
@@ -540,11 +591,23 @@ export default function AdminPartnersPage() {
                           >
                             {payout.status}
                           </span>
-                          {payout.transferReference && (
+                          {payout.txHash ? (
+                            <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5 font-mono">
+                              <a
+                                href={`https://blockexplorer.electroneum.com/tx/${payout.txHash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline inline-flex items-center gap-0.5"
+                              >
+                                <span>Tx: {payout.txHash.slice(0, 10)}...</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            </div>
+                          ) : payout.transferReference ? (
                             <div className="text-[10px] text-slate-400 mt-0.5 font-mono">
                               Ref: {payout.transferReference}
                             </div>
-                          )}
+                          ) : null}
                         </td>
                         <td className="py-3 px-4 text-center">
                           {payout.status === "pending" ? (
@@ -598,6 +661,7 @@ export default function AdminPartnersPage() {
             payoutId: selectedPayout._id,
             action: "approve",
             transferReference,
+            txHash: transferReference,
             adminNotes,
           });
         }}

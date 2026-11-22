@@ -296,3 +296,72 @@ export async function getRelayerStatus(latestAnchoredTxHash?: string | null): Pr
     };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Hyperlane Stablecoin Tokens on Electroneum Smart Chain (Chain ID: 52014)
+// Standard: EvmHypSynthetic (ERC-20 with Hyperlane Warp Route bridging)
+// ---------------------------------------------------------------------------
+
+export interface HyperlaneTokenConfig {
+  symbol: "USDC" | "USDT";
+  name: string;
+  address: `0x${string}`;
+  decimals: number;
+  standard: "EvmHypSynthetic";
+  iconUrl: string;
+  color: string;
+  coingeckoId: string;
+  warpRoute: {
+    collateralChains: readonly string[];
+  };
+}
+
+export const HYPERLANE_ELECTRONEUM_TOKENS = {
+  USDC: {
+    symbol: "USDC",
+    name: "Hyperlane USD Coin",
+    address: "0x3187deAd7A2Bd6770F5Fe81495D1B715926AAe6e",
+    decimals: 6,
+    standard: "EvmHypSynthetic",
+    iconUrl: "/tokens/usdc.svg",
+    color: "#2775CA",
+    coingeckoId: "usd-coin",
+    warpRoute: {
+      collateralChains: ["Base", "Ethereum", "Avalanche"],
+    },
+  },
+  USDT: {
+    symbol: "USDT",
+    name: "Hyperlane Tether USD",
+    address: "0x48E722f1458b253c2FB0E573F939318D7Dbd54e7",
+    decimals: 6,
+    standard: "EvmHypSynthetic",
+    iconUrl: "/tokens/usdt.svg",
+    color: "#53AE94",
+    coingeckoId: "tether",
+    warpRoute: {
+      collateralChains: ["Ethereum"],
+    },
+  },
+} as const;
+
+export type HyperlaneTokenSymbol = keyof typeof HYPERLANE_ELECTRONEUM_TOKENS;
+
+/**
+ * Resolves a Hyperlane token configuration by symbol ("USDC" | "USDT") or contract address.
+ */
+export function getHyperlaneToken(
+  symbolOrAddress?: string | null
+): HyperlaneTokenConfig | null {
+  if (!symbolOrAddress) return null;
+  const clean = symbolOrAddress.trim().toLowerCase();
+
+  if (clean === "usdc" || clean === HYPERLANE_ELECTRONEUM_TOKENS.USDC.address.toLowerCase()) {
+    return HYPERLANE_ELECTRONEUM_TOKENS.USDC;
+  }
+  if (clean === "usdt" || clean === HYPERLANE_ELECTRONEUM_TOKENS.USDT.address.toLowerCase()) {
+    return HYPERLANE_ELECTRONEUM_TOKENS.USDT;
+  }
+  return null;
+}
+
