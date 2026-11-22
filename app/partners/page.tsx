@@ -262,7 +262,7 @@ export default function AdminPartnersPage() {
             )}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Awaiting manual bank transfer
+            Awaiting bank / crypto payout
           </div>
         </div>
 
